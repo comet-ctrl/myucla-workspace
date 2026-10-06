@@ -1,12 +1,9 @@
 name: Release
 
-# Tag a version and this builds it, zips the loadable extension, and attaches
-# the zip to a GitHub Release. The install page links to /releases/latest, so
-# that link never goes stale.
+# A matching version tag builds a draft release for maintainer review.
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -39,14 +36,15 @@ jobs:
       # The zip contains dist/ itself, so "Load unpacked" points at a folder
       # named dist, exactly as the install page says.
       - name: Package
-        run: zip -r "better-myucla-${GITHUB_REF_NAME}.zip" dist
+        run: zip -r "myucla-workspace-${GITHUB_REF_NAME}.zip" dist
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: better-myucla-*.zip
+          files: myucla-workspace-*.zip
           generate_release_notes: true
+          draft: true
           body: |
-            Install guide: https://astro-wen.github.io/better-myucla-planner/
+            Install guide: https://github.com/comet-ctrl/myucla-workspace#install-or-update
 
             Download the zip below, unzip it somewhere permanent, then in Chrome open
             `chrome://extensions`, turn on Developer mode, click "Load unpacked" and

@@ -6,7 +6,7 @@ a PR is a proposal, not a change.
 ## How a change actually lands
 
 1. You fork the repo and push a branch to your fork.
-2. You open a pull request against the default branch, currently `workspace-v0.19.4`.
+2. You open a pull request against the default branch, currently `workspace-v0.19.5`.
 3. CI runs `npm run typecheck`, `npm test`, and `npm run build` on your branch.
 4. The maintainer reads it and either merges, asks for changes, or closes it.
 

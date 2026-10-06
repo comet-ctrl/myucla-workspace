@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>MyUCLA Workspace</title>
+  <rect width="128" height="128" rx="28" fill="#222940"/>
+  <rect x="20" y="24" width="36" height="80" rx="7" fill="#a6aaff"/>
+  <rect x="64" y="24" width="44" height="30" rx="7" fill="#dfe2ff"/>
+  <rect x="64" y="62" width="44" height="42" rx="7" fill="#89decd"/>
+</svg>

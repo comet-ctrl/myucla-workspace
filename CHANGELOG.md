@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.19.5 — MyUCLA Workspace identity (unreleased)
+
+- Adopt the MyUCLA Workspace name, independent pane icon and indigo/mint popup palette.
+- Shorten popup explanations while preserving all settings and their saved values.
+- Add current install instructions, project credits, contribution templates, a product roadmap and release checklist.
+- Package original MIT licensing and credits with the extension. Future version tags prepare branded draft releases.
+- Preserve the exact page permission, storage keys and native planner behavior.
+
+
 ## 0.19.4 — unreleased header and calendar polish
 
 - Reveal UCLA's unchanged header temporarily by hovering at the top edge or

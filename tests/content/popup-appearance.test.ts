@@ -35,7 +35,7 @@ it("starts with System and updates both popup and the saved string for explicit 
   expect(document.documentElement.dataset.plAppearance).toBe("light");
   select().value = "system"; select().dispatchEvent(new Event("change")); await flush();
   dark = false; mediaListeners.forEach(fn => fn()); expect(document.documentElement.dataset.plAppearance).toBe("light");
-  expect(document.body.textContent).toContain("tab groups, closed panels and sizes are saved");
+  expect(document.body.textContent).toContain("Your layout is saved in this browser");
   expect(document.body.textContent).not.toContain("positions last until reload");
   window.dispatchEvent(new Event("pagehide")); expect(storageListeners.size).toBe(0); expect(mediaListeners.size).toBe(0);
 });

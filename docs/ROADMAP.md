@@ -1,3 +1,5 @@
+> Historical design notes. See [current product direction](PRODUCT_ROADMAP.md) and [HANDOFF](../HANDOFF.md) for the current project.
+
 # State of play, and what is deliberately not built
 
 Split out of `README.md`, which is now a front door rather than a notebook.

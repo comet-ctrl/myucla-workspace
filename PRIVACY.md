@@ -1,6 +1,6 @@
 # Privacy
 
-Better MyUCLA is an unofficial, browser-only enhancement for the MyUCLA Class
+MyUCLA Workspace is an unofficial, browser-only enhancement for the MyUCLA Class
 Planner. It has no server, no account, no analytics, and no telemetry.
 
 ## What page it can touch

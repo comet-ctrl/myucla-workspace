@@ -1,8 +1,8 @@
 {
-  "name": "better-myucla",
-  "version": "0.19.4",
+  "name": "myucla-workspace",
+  "version": "0.19.5",
   "private": true,
-  "description": "A local-only, safety-first MyUCLA Class Planner enhancement.",
+  "description": "A customizable workspace for browsing courses and planning schedules inside MyUCLA.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -30,7 +30,8 @@
     "test:header-reveal": "node harness/verify-header-reveal.mjs",
     "test:calendar-gridlines": "node harness/verify-calendar-gridlines.mjs",
     "preview:build": "node scripts/build-preview.mjs",
-    "preview:verify": "node harness/verify-preview.mjs"
+    "preview:verify": "node harness/verify-preview.mjs",
+    "icons:build": "node scripts/build-icons.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.326",
@@ -44,5 +45,10 @@
     "type": "git",
     "url": "git+https://github.com/comet-ctrl/myucla-workspace.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "author": "comet-ctrl",
+  "homepage": "https://github.com/comet-ctrl/myucla-workspace#readme",
+  "bugs": {
+    "url": "https://github.com/comet-ctrl/myucla-workspace/issues"
+  }
 }

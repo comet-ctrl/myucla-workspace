@@ -49,7 +49,7 @@ class IframePlannerFrame implements PlannerFrame {
     document.getElementById(FRAME_ID)?.remove();
     const frame = document.createElement("iframe");
     frame.id = FRAME_ID;
-    frame.title = "Better MyUCLA background sync";
+    frame.title = "MyUCLA Workspace background sync";
     frame.tabIndex = -1;
     frame.setAttribute("aria-hidden", "true");
     frame.setAttribute("data-planner-lift-owned", "true");

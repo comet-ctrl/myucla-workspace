@@ -35,7 +35,7 @@ for (const input of Object.keys(bundle.metafile.inputs)) {
 const dom = new JSDOM(introductionFixtureHtml(6, true));
 const doc = dom.window.document;
 doc.documentElement.dataset.plFictionalPreview = 'true';
-doc.title = `Better MyUCLA · v${manifest.version} fictional preview`;
+doc.title = `MyUCLA Workspace · v${manifest.version} fictional preview`;
 
 // No existing native scripts, inline handlers or navigation targets are shipped.
 doc.querySelectorAll('script,link,iframe,object,embed,base').forEach(node => node.remove());
@@ -58,7 +58,7 @@ for (const [name, content] of Object.entries({
   'planner-source-revision': revision,
   'planner-production-css-sha256': stylesheetHash,
   'planner-production-content-sha256': contentHash,
-  'description': 'Interactive fictional preview using the Better MyUCLA production presentation code. No account connection or network requests.',
+  'description': 'Interactive fictional preview using the MyUCLA Workspace production presentation code. No account connection or network requests.',
 })) {
   const meta = doc.createElement('meta'); meta.name = name; meta.content = content; doc.head.append(meta);
 }

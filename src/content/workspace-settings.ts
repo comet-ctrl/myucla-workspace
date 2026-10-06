@@ -45,7 +45,7 @@ export class WorkspaceSettings {
     this.dialog.setAttribute(OWNED, ""); this.dialog.setAttribute("aria-labelledby", `${id}-title`);
     this.dialog.setAttribute("aria-describedby", `${id}-description`);
     const header = doc.createElement("header"); header.className = "pl-settings-header";
-    const title = doc.createElement("h2"); title.id = `${id}-title`; title.textContent = "Settings";
+    const title = doc.createElement("h2"); title.id = `${id}-title`; title.textContent = "MyUCLA Workspace settings";
     this.closeButton = doc.createElement("button"); this.closeButton.type = "button";
     this.closeButton.className = "pl-settings-close"; this.closeButton.textContent = "×";
     this.closeButton.setAttribute("aria-label", "Close settings");

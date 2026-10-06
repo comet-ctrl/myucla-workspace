@@ -1,9 +1,29 @@
-# Better MyUCLA — Agent handoff
+# MyUCLA Workspace — Agent handoff
 
 Last updated: 2026-10-05
 
-Current development version: `0.19.4`, branch `workspace-v0.19.4`.
+Current development version: `0.19.5`, branch `workspace-v0.19.5`.
 Installed files: `0.19.4` (Chrome reload requested). Published: `v0.19.1` prerelease.
+
+## v0.19.5 product identity
+
+MyUCLA Workspace is the product and extension name. The pane mark uses an
+indigo/mint palette independent of UCLA branding. The popup retains every
+setting and handler, with shorter explanations and privacy/support/credit links.
+The opt-in tidy setting is now labeled Workspace layout. Storage keys, message
+channels, DOM ownership identifiers and exact page permissions remain unchanged.
+The new package includes LICENSE and CREDITS.md. README and install page now
+lead with current source installation; historical releases remain separately linked.
+The installed extension folder has not been changed in this branding pass.
+Verification: typecheck, all 565 unit tests and production build pass.
+Light/dark popup checks confirm original preference reads and all setting
+actions, icon rendering, no horizontal overflow and text contrast >= 4.5:1.
+The install page fits 1440px and 390px in both themes. Existing dark-mode
+regressions pass at four widths, and the regenerated fictional preview passes
+its four-width suite after updating its Original layout step for the current
+Layout settings menu. Screenshots were inspected. No live account was used.
+The local ZIP is myucla-workspace-v0.19.5.zip; no release tag or Store
+submission was created. Future release tags create drafts for review.
 
 ## Standalone repository migration
 

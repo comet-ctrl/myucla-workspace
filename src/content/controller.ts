@@ -130,7 +130,7 @@ export class PlannerController {
     toolbar.setAttribute(OWNED_ATTRIBUTE, "true");
 
     const title = document.createElement("strong");
-    title.textContent = "Better MyUCLA · Demo";
+    title.textContent = "MyUCLA Workspace · Demo";
 
     const status = document.createElement("span");
     status.className = "pl-status";

@@ -313,3 +313,16 @@ Changes: preserved the local v0.19.4 work in a commit, fetched and merged contri
 Checks: typecheck, 565 unit tests, production build and regenerated fictional preview pass. Four-width dark mode, six-size viewport fill, three-width course tools and repeated local dragging pass. Updated browser restoration steps to open the contributor Layout settings menu. Combined authenticated-page verification remains pending; previous user acceptance does not establish acceptance of this merged build.
 
 Final migration regression results: all ten header-reveal cases pass; all five calendar pixel/geometry cases pass, including a deliberately opaque overlay that reproduces the old missing-gridline problem. The overlay test now uses the same CSS importance as the merged rule so it genuinely exercises the negative control.
+
+
+## 19 — MyUCLA Workspace product identity
+
+Date: 2026-10-05 (user local date).
+
+Request: make the standalone project the user's own product through consistent identity, documentation and workflow.
+
+Changes: renamed the extension, popup and package to MyUCLA Workspace at v0.19.5; created an editable vector pane icon with generated Chrome PNG sizes; introduced an indigo/mint popup identity and shorter setting explanations; added source/issue/credit links. Renamed the optional Tidy label to Workspace layout, retaining all IDs, handlers, storage keys, message channels and page permissions. Rewrote the README and installation page, added CREDITS, documentation index, roadmap, issue templates and release checklist. Historical docs remain linked and explicitly labeled. Build output now carries the unchanged MIT LICENSE and credits; version tags prepare branded draft release ZIPs.
+
+Verification: typecheck, 565 unit tests, production build and regenerated preview pass. One old popup copy assertion was updated for the new wording. Existing dark-mode browser checks pass at four widths. One-off branding checks verify all four icon sizes, original licensing in dist, unchanged manifest permissions/content-script matches, preserved saved preferences, popup controls and >=4.5:1 text contrast in both themes. Install page fits 1440/390px in both themes; screenshots inspected. Preview suite passes at 1440/1280/960/390px after using the current Layout settings menu to reach Original layout.
+
+Delivery: workspace-v0.19.5 is the branded source branch; v0.19.4 remains the baseline. Packaged locally as myucla-workspace-v0.19.5.zip. No live account interaction, installed-extension overwrite, public release tag, website deployment or Chrome Web Store submission was performed. Authenticated-page verification of the combined build remains pending.

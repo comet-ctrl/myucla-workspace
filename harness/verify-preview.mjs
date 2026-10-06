@@ -180,6 +180,7 @@ try {
     }
 
     await nativePreserved(page);
+    await page.locator('.pl-workspace-layout-settings > summary').click();
     await page.locator('.pl-workspace-original').click();
     assert.equal(await page.locator('#ctl00_MainContent_classPlanPanel > section').count(), 6, 'Original layout restores all six native sections');
     assert.equal(await page.locator('.pl-browser-index').count(), 0);
@@ -228,6 +229,7 @@ try {
     await page.locator('.pl-browser-body-active .header-Status').click();
     assert.match(await page.locator('#preview-feedback').textContent(), /Sample section information/, 'section help remains usable after result redraw');
     await noPageOverflow(page, 'redrawn local search');
+    await page.locator('.pl-workspace-layout-settings > summary').click();
     await page.locator('.pl-workspace-original').click();
     const firstResultHeading = page.locator('#CourseListEntry_M0 .class-title a');
     const firstResultBody = page.locator('#container_course_M0');

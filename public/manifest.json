@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Better MyUCLA — Planner Tools",
-  "version": "0.19.4",
-  "version_name": "0.19.4 development — header and calendar polish",
-  "description": "Drag, reorder, filter and annotate your MyUCLA Class Planner. Saving replays your arrangement through MyUCLA's own up and down buttons.",
+  "name": "MyUCLA Workspace",
+  "version": "0.19.5",
+  "version_name": "0.19.5 development — MyUCLA Workspace",
+  "description": "An unofficial, customizable workspace for UCLA Class Planner. Browse courses, arrange panels and keep your schedule in view.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -14,7 +14,7 @@
     "storage"
   ],
   "action": {
-    "default_title": "Better MyUCLA",
+    "default_title": "MyUCLA Workspace",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -46,5 +46,6 @@
       "run_at": "document_end",
       "world": "MAIN"
     }
-  ]
+  ],
+  "homepage_url": "https://github.com/comet-ctrl/myucla-workspace"
 }

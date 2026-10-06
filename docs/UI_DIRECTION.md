@@ -1,3 +1,5 @@
+> Historical design notes. See [current product direction](PRODUCT_ROADMAP.md) and [HANDOFF](../HANDOFF.md) for the current project.
+
 # Planner workspace direction — 0.17.0
 
 The approved design keeps named navigation on the left, a selected workspace in

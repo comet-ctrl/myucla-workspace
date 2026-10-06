@@ -1,5 +1,8 @@
 # Standalone project — 2026-10-05
 
+> Migration snapshot at v0.19.4. The later v0.19.5 branding pass adopts the
+> MyUCLA Workspace name. See the current [README](../README.md).
+
 Development continues at https://github.com/comet-ctrl/myucla-workspace on
 `workspace-v0.19.4`, the default branch. This is a standalone GitHub repository,
 with the complete ancestry of the transferred branch, rather than another fork
