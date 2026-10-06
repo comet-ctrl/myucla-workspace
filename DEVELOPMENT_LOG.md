@@ -485,3 +485,5 @@ Verification: npm 10.9.9 clean-install dry run and full npm ci pass locally on W
 准备：读取贡献流程，拉取 origin 与 upstream；derrick-improvements 与 upstream/main 基线一致，没有上游独有提交，也未发现此分支已有打开的 PR。整理第 23—29 条的备注保存/取消、提示和箭头、顶栏交互与避让/滚动、深色语义颜色和详情宽度修复。沿用本轮已完成的 typecheck、565 项测试、build 及各虚构浏览器回归；最终 diff 检查无空白错误。PR 将说明真实页面需用户确认，不上传真实截图、课程内容或 dist，不修改版本，不执行合并。
 
 交付操作：授权范围内提交并推送至 Derrick2007 fork 的 derrick-improvements，目标为 comet-ctrl/myucla-workspace 的 main。创建结果将在本会话回报；只有维护者决定合并。
+
+第 30 条交付结果（2026-10-06，America/Los_Angeles，跨午夜）：代码提交 625c787 已推送至 origin/derrick-improvements。GitHub 连接器创建 PR 返回 403 Resource not accessible by integration；转用用户已登录的浏览器创建成功：https://github.com/comet-ctrl/myucla-workspace/pull/1 。目标 comet-ctrl:main，来源 Derrick2007:derrick-improvements，状态 Open，未合并。PR 描述包含实际测试、虚构与真实页面证据边界和剩余限制；未上传真实截图。此追加仅更新交接记录。

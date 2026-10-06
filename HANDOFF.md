@@ -2,6 +2,10 @@
 
 Last updated: 2026-10-05
 
+PR handoff completed 2026-10-06 (local midnight):
+https://github.com/comet-ctrl/myucla-workspace/pull/1 is open against main from
+Derrick2007:derrick-improvements. Code commit: 625c787. No merge performed.
+
 Current development version: `0.19.5`, active local branch `derrick-improvements`.
 The permanent upstream default remains `main`.
 
