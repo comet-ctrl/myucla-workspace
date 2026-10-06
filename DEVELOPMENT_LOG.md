@@ -347,3 +347,15 @@ Request: diagnose the nine typecheck errors encountered while preparing the rele
 Changes: replaced generic ReturnType<typeof vi.fn> declarations with callable Mock signatures in panel-drop-operations, panel-layout, planner-workspace and workspace-settings tests. Panel and settings mocks derive their types from the production callback contracts. Preserved the user's package.json and package-lock.json updates; no production behavior changed.
 
 Verification: reproduced all nine errors before the fix. Typecheck, all 565 tests in 39 files under Vitest 4.1.11 and production build pass after the fix. The initial build failed because the Windows sandbox denied esbuild directory resolution; the approved build outside that sandbox passed. No authenticated-page interaction, commit, push, tag or release publication was performed. The user is carrying out the release steps themselves.
+
+## 22 — Release clean-install lockfile repair
+
+Date: 2026-10-05 (user local date).
+
+Request: verify the user's v0.19.5 tag push and draft release preparation.
+
+Finding: GitHub Release run 37400515326 failed at npm ci under Node 22.23.3/npm 10.9.9. The npm 11-generated lockfile lacked the esbuild 0.28.2 optional peer tree required by Vite 8 under npm 10. No draft release was created. Existing-module typecheck/tests/build had not detected this install problem.
+
+Changes: regenerated package-lock.json with npm 10, adding the missing esbuild peer and platform entries. Added a release-checklist requirement for a clean install with the release runner's npm version before tagging. No production source or version change.
+
+Verification: npm 10.9.9 clean-install dry run and full npm ci pass locally on Windows; typecheck, all 565 tests in 39 files and production build pass after that clean install. npm audit reports zero vulnerabilities. These local checks used Node 24.19.0, not a Linux runner; GitHub verification of the corrected commit is still pending. No commit, push, tag modification, release publication, installed-extension overwrite or authenticated-page interaction was performed. The user will commit and push the repair and update the unpublished failed tag.

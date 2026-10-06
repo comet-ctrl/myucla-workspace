@@ -4,6 +4,10 @@ Use commits for routine progress. Publish a release when a coherent, tested
 milestone is ready for people to install.
 
 - [ ] Match package, lockfile and manifest versions on `main`; no version branch is needed.
+- [ ] Validate a clean dependency install with the release runner's Node 22/npm 10
+      toolchain before tagging. `npm exec --yes --package=npm@10.9.9 -- npm ci`
+      checks the current runner's npm version. A working existing node_modules
+      folder does not prove the committed lockfile can install cleanly.
 - [ ] Update README, CHANGELOG, HANDOFF and DEVELOPMENT_LOG with actual results.
 - [ ] Run typecheck, all unit tests and the production build.
 - [ ] Run browser fixtures appropriate to the changes, including light/dark,
