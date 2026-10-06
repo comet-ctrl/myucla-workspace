@@ -37,3 +37,8 @@ The project lives at https://github.com/comet-ctrl/myucla-workspace. Anyone may
 open a pull request; only the maintainer merges. See `CONTRIBUTING.md`.
 
 `dist/` is a build artifact and is not committed. Run `npm run build` after cloning.
+
+Branch workflow: `main` is the permanent development/default branch. Work on
+`main` for routine authorized updates; use short-lived descriptive branches for
+substantial isolated changes. Do not create or rename branches for version bumps.
+Version numbers belong in manifests and deliberate release tags.

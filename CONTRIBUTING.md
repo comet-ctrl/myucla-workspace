@@ -6,12 +6,22 @@ a PR is a proposal, not a change.
 ## How a change actually lands
 
 1. You fork the repo and push a branch to your fork.
-2. You open a pull request against the default branch, currently `workspace-v0.19.5`.
+2. You open a pull request against `main`, the permanent default branch.
 3. CI runs `npm run typecheck`, `npm test`, and `npm run build` on your branch.
 4. The maintainer reads it and either merges, asks for changes, or closes it.
 
 Contributors propose changes through pull requests; the maintainer merges them. If a PR touches the
 safety rules below it will be closed rather than negotiated.
+
+## Branches and versions
+
+Routine maintainer updates can land on `main`. Use a short-lived descriptive
+branch such as `fix/panel-dragging` for a substantial change, then remove it
+after merge. A version bump does not need another branch.
+
+Use `vX.Y.Z` tags only for deliberate release milestones; the release workflow
+creates a draft. The `baseline-v0.19.4` tag preserves the older development
+checkpoint without creating a release.
 
 ## Before you open one
 

@@ -2,8 +2,17 @@
 
 Last updated: 2026-10-05
 
-Current development version: `0.19.5`, branch `workspace-v0.19.5`.
+Current development version: `0.19.5`, branch `main`.
 Installed files: `0.19.4` (Chrome reload requested). Published: `v0.19.1` prerelease.
+
+## Permanent main workflow
+
+`main` is now the permanent default/development branch. The prior
+`workspace-v0.19.5` branch was renamed; v0.19.4 is retained by the
+`baseline-v0.19.4` tag. The standalone repository has one working branch.
+Use temporary descriptive branches only when useful for substantial changes,
+and deliberate version tags for releases. Do not create branches for each
+version bump. Historical branch names below record earlier work.
 
 ## v0.19.5 product identity
 
@@ -30,8 +39,9 @@ submission was created. Future release tags create drafts for review.
 Canonical repository: https://github.com/comet-ctrl/myucla-workspace.
 The latest remote contributor history (`b90faff`, PR #2) is merged with the
 local v0.19.4 work; both ancestries and the original license are retained.
-The historical fork and its release downloads remain available. Branches now
-use purpose-first names with version suffixes; see [migration details](docs/REPOSITORY_MIGRATION.md).
+The historical fork and its release downloads remain available. Its branches
+retain version suffixes; the standalone repo now uses permanent `main`. See
+[migration details](docs/REPOSITORY_MIGRATION.md).
 The installed Chrome extension has not been changed during this migration.
 The rebuilt combined source requires a separate install/reload to use locally.
 

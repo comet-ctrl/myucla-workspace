@@ -24,12 +24,20 @@ This project derives from [Astro-wen's Better MyUCLA planner](https://github.com
 The separate repository reflects its independently maintained workspace design;
 it does not change the attribution or imply UCLA affiliation.
 
-## Branch naming
+## Current branch workflow
 
-Use `<purpose>-v<version>`, with the version matching the branch's package and
-extension manifest. When a development line moves to a new version, rename its
-branch and update these references. CI runs on every branch; releases remain
-separate, explicit publication milestones.
+After migration, development was consolidated onto permanent `main`.
+`workspace-v0.19.5` was renamed to `main`; the fully included
+`workspace-v0.19.4` branch was replaced by the `baseline-v0.19.4` tag in the
+standalone repository. No commits were dropped and no release was published.
+Future version bumps stay on `main`; substantial changes may use short-lived
+descriptive branches. See [Contributing](../CONTRIBUTING.md).
+
+## Historical branch naming
+
+The initial migration used `<purpose>-v<version>` names. That convention
+was subsequently replaced by the permanent `main` workflow above. CI runs
+on every branch; releases remain separate, explicit publication milestones.
 
 The historical repository is https://github.com/comet-ctrl/better-myucla-planner.
 Its branches were renamed as follows, preserving their commit histories:

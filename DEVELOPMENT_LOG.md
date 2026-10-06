@@ -326,3 +326,14 @@ Changes: renamed the extension, popup and package to MyUCLA Workspace at v0.19.5
 Verification: typecheck, 565 unit tests, production build and regenerated preview pass. One old popup copy assertion was updated for the new wording. Existing dark-mode browser checks pass at four widths. One-off branding checks verify all four icon sizes, original licensing in dist, unchanged manifest permissions/content-script matches, preserved saved preferences, popup controls and >=4.5:1 text contrast in both themes. Install page fits 1440/390px in both themes; screenshots inspected. Preview suite passes at 1440/1280/960/390px after using the current Layout settings menu to reach Original layout.
 
 Delivery: workspace-v0.19.5 is the branded source branch; v0.19.4 remains the baseline. Packaged locally as myucla-workspace-v0.19.5.zip. No live account interaction, installed-extension overwrite, public release tag, website deployment or Chrome Web Store submission was performed. Authenticated-page verification of the combined build remains pending.
+
+
+## 20 — Consolidate development onto main
+
+Date: 2026-10-05 (user local date).
+
+Request: use permanent main, temporary descriptive branches for substantial changes, and tags for version milestones.
+
+Changes: renamed the GitHub and local workspace-v0.19.5 branch to main. Confirmed there were no open pull requests and workspace-v0.19.4 was fully included, preserved its exact commit as annotated baseline-v0.19.4, then removed that redundant branch using an expected-commit lease. Updated local tracking, README, contributor/agent rules, release checklist, migration notes and popup/install-page links. Historical fork branches and all commit history remain intact; no release or application version bump was created.
+
+Verification: GitHub reports main as the default and sole branch in the standalone repository; the remote baseline tag resolves to 0f6fbb6603e4a0a15e6938ffcea3665b69fd44f1. Typecheck, all 565 unit tests and production build pass. This update changes repository workflow and links, not planner behavior.

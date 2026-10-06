@@ -3,7 +3,7 @@
 Use commits for routine progress. Publish a release when a coherent, tested
 milestone is ready for people to install.
 
-- [ ] Match package, lockfile and manifest versions; use a purpose/version branch.
+- [ ] Match package, lockfile and manifest versions on `main`; no version branch is needed.
 - [ ] Update README, CHANGELOG, HANDOFF and DEVELOPMENT_LOG with actual results.
 - [ ] Run typecheck, all unit tests and the production build.
 - [ ] Run browser fixtures appropriate to the changes, including light/dark,

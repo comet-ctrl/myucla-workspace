@@ -33,7 +33,7 @@ prerequisites or automate enrollment.
 
 ## Install or update
 
-**Current source: v0.19.5**, on `workspace-v0.19.5`. This branding build is not
+**Current source: v0.19.5**, on `main`. This branding build is not
 published to the Chrome Web Store. Build from source for the current version:
 
 ```sh
