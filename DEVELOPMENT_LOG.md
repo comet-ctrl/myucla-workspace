@@ -337,3 +337,13 @@ Request: use permanent main, temporary descriptive branches for substantial chan
 Changes: renamed the GitHub and local workspace-v0.19.5 branch to main. Confirmed there were no open pull requests and workspace-v0.19.4 was fully included, preserved its exact commit as annotated baseline-v0.19.4, then removed that redundant branch using an expected-commit lease. Updated local tracking, README, contributor/agent rules, release checklist, migration notes and popup/install-page links. Historical fork branches and all commit history remain intact; no release or application version bump was created.
 
 Verification: GitHub reports main as the default and sole branch in the standalone repository; the remote baseline tag resolves to 0f6fbb6603e4a0a15e6938ffcea3665b69fd44f1. Typecheck, all 565 unit tests and production build pass. This update changes repository workflow and links, not planner behavior.
+
+## 21 — Vitest 4 mock type compatibility
+
+Date: 2026-10-05 (user local date).
+
+Request: diagnose the nine typecheck errors encountered while preparing the release after the user's dependency update to Vitest 4.1.11.
+
+Changes: replaced generic ReturnType<typeof vi.fn> declarations with callable Mock signatures in panel-drop-operations, panel-layout, planner-workspace and workspace-settings tests. Panel and settings mocks derive their types from the production callback contracts. Preserved the user's package.json and package-lock.json updates; no production behavior changed.
+
+Verification: reproduced all nine errors before the fix. Typecheck, all 565 tests in 39 files under Vitest 4.1.11 and production build pass after the fix. The initial build failed because the Windows sandbox denied esbuild directory resolution; the approved build outside that sandbox passed. No authenticated-page interaction, commit, push, tag or release publication was performed. The user is carrying out the release steps themselves.

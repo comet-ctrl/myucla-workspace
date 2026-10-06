@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { PanelLayoutController, type PanelDock, type PanelDockTarget } from "../../src/content/panel-layout";
 
 describe("native-preserving panel layout", () => {
   let layout: PanelLayoutController;
   let host: HTMLElement, panel: HTMLElement, handle: HTMLButtonElement, field: HTMLInputElement;
-  let changed: ReturnType<typeof vi.fn>, activate: ReturnType<typeof vi.fn>;
+  let changed: Mock<NonNullable<ConstructorParameters<typeof PanelLayoutController>[2]>>;
+  let activate: Mock<() => void>;
   let animationFrames: Map<number, FrameRequestCallback>, nextFrame: number;
   const paint = () => {
     const callbacks = [...animationFrames.values()]; animationFrames.clear();

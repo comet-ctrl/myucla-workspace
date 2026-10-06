@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { PanelLayoutController, type PanelDropOperation, type PanelDropTarget, type PanelRegistration } from "../../src/content/panel-layout";
 
 describe("explicit panel drop operations", () => {
   let layout: PanelLayoutController, host: HTMLElement, panel: HTMLElement, handle: HTMLButtonElement;
-  let changed: ReturnType<typeof vi.fn>, activate: ReturnType<typeof vi.fn>;
+  let changed: Mock<NonNullable<ConstructorParameters<typeof PanelLayoutController>[2]>>;
+  let activate: Mock<() => void>;
   let frames: Map<number, FrameRequestCallback>, nextFrame: number;
   const rect = (left: number, top: number, width: number, height: number) => ({left, top, width, height, right:left+width, bottom:top+height, x:left, y:top, toJSON() {}});
   const paint = () => { const pending=[...frames.values()]; frames.clear(); pending.forEach(callback=>callback(0)); };

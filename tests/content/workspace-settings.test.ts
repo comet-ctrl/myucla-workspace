@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { WorkspaceSettings } from "../../src/content/workspace-settings";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { WorkspaceSettings, type WorkspaceSettingsCallbacks } from "../../src/content/workspace-settings";
 
 describe("owned workspace settings", () => {
   let settings: WorkspaceSettings;
-  let onPreset: ReturnType<typeof vi.fn>, onDefault: ReturnType<typeof vi.fn>;
+  let onPreset: Mock<WorkspaceSettingsCallbacks["onPreset"]>;
+  let onDefault: Mock<WorkspaceSettingsCallbacks["onDefault"]>;
   const descriptors = new Map<string, PropertyDescriptor | undefined>();
   const trigger = () => document.querySelector<HTMLButtonElement>(".pl-workspace-settings")!;
   const dialog = () => document.querySelector<HTMLDialogElement>(".pl-workspace-settings-dialog")!;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // @vitest-environment-options {"url":"https://be.my.ucla.edu/ClassPlanner/ClassPlan.aspx"}
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { isKnownEmptyPlanner, PlannerWorkspace } from "../../src/content/planner-workspace";
 import { MyUclaPlannerAdapter } from "../../src/adapters/myucla-adapter";
 // @ts-expect-error Shared browser fixture is plain JavaScript.
@@ -9,8 +9,8 @@ import { workspaceFixtureHtml, introductionFixtureHtml, emptyPlanFixtureHtml } f
 describe("one-page native planner workspace", () => {
   let workspace: PlannerWorkspace;
   let adapter: MyUclaPlannerAdapter;
-  let optimizerPostback: ReturnType<typeof vi.fn>;
-  let optimizerShrink: ReturnType<typeof vi.fn>;
+  let optimizerPostback: Mock<(target: string, argument: string) => void>;
+  let optimizerShrink: Mock<(id: string) => void>;
   const mount = () => {
     workspace.reconcile(document, adapter.inspectContract().courses);
     // JSDOM has no layout: model the desktop fixture instead of inferring a
