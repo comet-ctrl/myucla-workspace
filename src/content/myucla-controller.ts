@@ -809,6 +809,10 @@ export class MyUclaPlannerController {
       tagInput.dataset.plTag = "true";
       tagInput.setAttribute("aria-label", `Note for ${courseLabel}`);
       tagEditor.append(tagInput);
+      const tagActions = document.createElement("div");
+      tagActions.className = "pl-tag-editor-actions";
+      tagActions.append(this.createActionButton("save-tag", "Save note"), this.createActionButton("cancel-tag", "Cancel"));
+      tagEditor.append(tagActions);
 
       tools.append(rail, tagEditor);
       host.append(tools);
@@ -839,7 +843,7 @@ export class MyUclaPlannerController {
     const annotation = this.annotations[courseId] || { color: "none", tag: "" };
     const tools = this.findTools(courseId);
     const input = tools?.querySelector<HTMLInputElement>("[data-pl-tag]");
-    if (input && document.activeElement !== input) input.value = annotation.tag;
+    if (input && !this.openTagEditors.has(courseId)) input.value = annotation.tag;
 
     const labelHost = this.adapter.getLabelHost(course);
     let badge = labelHost.querySelector<HTMLElement>(":scope > [data-pl-tag-badge]");
@@ -2002,12 +2006,21 @@ export class MyUclaPlannerController {
       this.applyViewState();
       this.persistViewState();
     } else if (action === "tag") {
+      const input=this.findTools(courseId)?.querySelector<HTMLInputElement>("[data-pl-tag]");
+      if(input)input.value=this.annotations[courseId]?.tag||"";
       if (this.openTagEditors.has(courseId)) this.openTagEditors.delete(courseId);
       else this.openTagEditors.add(courseId);
       this.applyViewState();
       if (this.openTagEditors.has(courseId)) {
         this.findTools(courseId)?.querySelector<HTMLInputElement>("[data-pl-tag]")?.focus();
       }
+    } else if (action === "save-tag" || action === "cancel-tag") {
+      const tools=this.findTools(courseId),input=tools?.querySelector<HTMLInputElement>("[data-pl-tag]");
+      if(action==="save-tag"&&input)void this.saveTag(courseId,input.value);
+      else if(input)input.value=this.annotations[courseId]?.tag||"";
+      this.openTagEditors.delete(courseId);
+      this.applyViewState();
+      tools?.querySelector<HTMLButtonElement>('[data-pl-action="tag"]')?.focus();
     }
   };
 
@@ -2048,7 +2061,6 @@ export class MyUclaPlannerController {
     if (!courseId) return;
 
     if (target instanceof HTMLInputElement && target.matches("[data-pl-tag]")) {
-      void this.saveTag(courseId, target.value);
       return;
     }
     if (target instanceof HTMLSelectElement && target.matches("[data-pl-position]")) {
@@ -2057,6 +2069,12 @@ export class MyUclaPlannerController {
   };
 
   private onKeyDown = (event: KeyboardEvent): void => {
+    const noteInput=event.target instanceof HTMLInputElement&&event.target.matches("[data-pl-tag]")?event.target:null;
+    if(noteInput&&(event.key==="Enter"||event.key==="Escape")){
+      event.preventDefault();event.stopPropagation();
+      noteInput.closest("[data-pl-real-tools]")?.querySelector<HTMLButtonElement>(`[data-pl-action="${event.key==="Enter"?"save-tag":"cancel-tag"}"]`)?.click();
+      return;
+    }
     if (event.key === "Escape") {
       if(event.defaultPrevented)return;
       const target=event.target instanceof Element?event.target:null;

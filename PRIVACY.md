@@ -216,8 +216,19 @@ page; no new storage, permissions or data collection is added.
 
 Compact header / Show header changes only the document scroll position and
 reads the existing public heading's bounds. Only the explicit boolean choice
-is stored locally. In 0.19.4, top-edge hover or keyboard focus temporarily reveals
-the unchanged native header without changing that preference. Pointer/focus
+is stored locally. The current local update uses an 80px centered hint: hovering
+only exposes its arrow; clicking temporarily reveals the unchanged native
+header without changing that preference. An explicit click now keeps it open
+until the upward arrow is clicked or Escape is pressed; pointer departure,
+outside clicks and blur do not close it. The explicit-open flag is memory-only.
+While explicitly open, document scrolling is bounded using existing rendered
+bounds to prevent partial disappearance; oversized menus retain necessary
+travel and pane scrolling stays independent. No additional data is read.
+The saved expanded view has the same close arrow; clicking it saves the
+existing compact boolean. Compact root alignment also prevents sidebar wheel
+from drifting into native footer content. This adds no stored fields.
+Native keyboard navigation
+still reveals the header when focused. Pointer/focus
 ancestry and native menu visibility attributes keep the header open while used;
 menu text is not read or stored. Short, bounded transition/dismissal timers and
 lifecycle events send no requests and do not poll. Show header pins it open;

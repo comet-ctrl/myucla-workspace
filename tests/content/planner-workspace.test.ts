@@ -110,6 +110,19 @@ describe("one-page native planner workspace", () => {
     buttons[1].click();expect(document.querySelectorAll(".pl-workspace-detail-space")).toHaveLength(0);expect(document.activeElement).toBe(buttons[1]);
     expect(adapter.inspectContract().ok).toBe(true);
   });
+  it("toggles details from the course summary and keyboard without intercepting course tools", () => {
+    mount();const card=adapter.inspectContract().courses[0].node;
+    const trigger=card.querySelector<HTMLElement>('[data-pl-workspace-details]')!;
+    expect(card.querySelector('button.pl-workspace-detail-button')).toBeNull();
+    card.querySelector<HTMLElement>('.pl-workspace-course-summary span')!.click();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    card.querySelector<HTMLButtonElement>('[data-pl-workspace-actions]')!.click();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    trigger.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  });
   it("keeps expanded courses across native table replacement without stealing focus or invoking controls", () => {
     const courses=adapter.inspectContract().courses.slice(0,2);mount();
     courses.slice().reverse().forEach(course=>course.node.querySelector<HTMLButtonElement>("[data-pl-workspace-details]")!.click());
@@ -205,8 +218,8 @@ describe("one-page native planner workspace", () => {
     expect(actions[0].getAttribute('aria-label')).toBe(`Course tools for ${courses[0].label}`);
     expect(actions.every(button=>button.type==='button'&&button.getAttribute('aria-expanded')==='false')).toBe(true);
     for(const button of actions){
-      expect(button.previousElementSibling?.matches('[data-pl-workspace-details]')).toBe(true);
-      expect(button.parentElement!.firstElementChild).toBe(button.previousElementSibling);
+      expect(button.parentElement!.firstElementChild).toBe(button);
+      expect(button.closest('tbody.courseItem')?.querySelector('[data-pl-workspace-details]')?.getAttribute('role')).toBe('button');
     }
     actions[0].click();expect(actions[0].getAttribute('aria-expanded')).toBe('true');
     actions[1].click();expect(actions[0].getAttribute('aria-expanded')).toBe('false');

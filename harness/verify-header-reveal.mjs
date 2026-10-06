@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 import { introductionFixtureHtml } from './workspace-fixture.mjs';
 import { nativeLayeredCalendarMarkup } from './calendar-fixture.mjs';
 
-const root = resolve(import.meta.dirname, '..'), output = resolve(root, '../../outputs/header-reveal');
+const root = resolve(import.meta.dirname, '..'), output = resolve(root, 'harness/shots/header-reveal');
 const css = await readFile(resolve(root, 'dist/injected.css'), 'utf8'), js = await readFile(resolve(root, 'dist/content.js'), 'utf8');
 const url = 'https://be.my.ucla.edu/ClassPlanner/ClassPlan.aspx';
 const headerKey = 'plannerLift.header.v1';
@@ -26,6 +26,7 @@ function fixture() {
   const account = doc.createElement('div'); account.className = 'fixture-account-bar'; account.textContent = 'Example university portal'; masthead.prepend(account);
   doc.querySelector('.classPlannerWrapper').insertAdjacentHTML('afterbegin', '<div class="classPlanner_Messages"><div class="classPlanner_TermReq">Example reminder: review courses for <button type="button" class="link" id="fixture-term-link" onclick="return false">Example future term</button> <button type="button" class="link uit-clickover-bottom text-default" id="fixture-notice-help" aria-label="Example notice help" onclick="return false"><i class="icon-question-sign" style="color:#000" aria-hidden="true">?</i></button></div></div>');
   const safeAction = doc.querySelector('#classPlanHeader button');
+  doc.querySelector('.classPlanner_Messages').insertAdjacentHTML('afterbegin', '<div class="classPlanner_Labels" style="color:#b00000">Example active notice</div>');
   safeAction.id = 'fixture-safe-planner-action'; safeAction.setAttribute('onclick', 'window.fixtureHarmlessClicks++');
   const style = doc.createElement('style'); style.textContent = `
     .fixture-account-bar{height:28px;box-sizing:border-box;padding:5px 24px;background:#a9d7e9;color:#234e78;font:12px/18px Arial,sans-serif}
@@ -81,17 +82,29 @@ async function open(browser, width, appearance, shadow) {
 async function reveal(page) {
   const edge = page.locator('.pl-intro-header-edge'), bounds = await edge.boundingBox();
   assert.ok(bounds && bounds.height > 0, 'the compact header has a visible reveal sensor');
-  // Revealing intentionally turns off sensor hit testing. Locator.hover would
-  // retry after the successful hover, because the native masthead replaces it.
+  assert.ok(bounds.width <= 132 && Math.abs(bounds.x + bounds.width / 2 - page.viewportSize().width / 2) <= 1, 'only a small centered tab senses pointer entry');
+  await page.mouse.move(12, 2); await page.waitForTimeout(160);
+  assert.equal(await page.locator('html').evaluate(n=>n.classList.contains('pl-header-revealed')), false, 'crossing the top outside the center does not open the header');
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.waitForTimeout(180);
+  assert.equal(await page.locator('html').evaluate(n=>n.classList.contains('pl-header-revealed')), false, 'hover shows the arrow without opening native navigation');
+  const tab = await edge.boundingBox();
+  assert.ok(tab.height >= 30, 'hover drops down the clickable arrow tab');
+  await page.mouse.click(tab.x + tab.width / 2, tab.y + tab.height / 2);
   await page.waitForFunction(() => document.documentElement.classList.contains('pl-header-revealed') && scrollY <= 1);
   assert.equal(await edge.getAttribute('aria-expanded'), 'true');
   const header = await page.locator('layout-headerwrap').boundingBox();
-  assert.ok(header && header.y >= -1 && header.height >= 166, 'hover brings the intact native masthead into view');
+  assert.ok(header && header.y >= -1 && header.height >= 166, 'click brings the intact native masthead into view');
 }
 
 async function leave(page, width) {
   await page.mouse.move(width - 24, 930);
+  if(await page.locator('html').evaluate(n=>n.classList.contains('pl-header-latched'))){
+    await page.waitForTimeout(320);
+    assert.ok(await page.locator('html').evaluate(n=>n.classList.contains('pl-header-revealed')),'pointer departure does not close a deliberately opened header');
+    assert.ok(await page.locator('.pl-intro-header-edge').isVisible(),'the upward close control remains available');
+    await page.locator('.pl-intro-header-edge').click();
+  }
   await page.waitForFunction(() => !document.documentElement.classList.contains('pl-header-revealed') && document.getElementById('titleText').getBoundingClientRect().top <= 13);
 }
 
@@ -133,6 +146,9 @@ try {
       assert.ok(await nativeList.evaluate(node => node.scrollTop > 0 && ['auto', 'scroll'].includes(getComputedStyle(node).overflowY)), 'native course list retains independent scrolling');
       await reveal(page);
       assert.ok(await nativeList.evaluate(node => node.scrollTop > 0), 'revealing UCLA navigation preserves the local list position');
+      await page.mouse.move(width - 24, 400); await page.mouse.wheel(0, 600); await page.waitForTimeout(250);
+      assert.ok(await page.evaluate(() => scrollY <= 1), 'wheel cannot leave a fitting explicitly opened header half hidden');
+      assert.ok(await page.locator('html').evaluate(node => node.classList.contains('pl-header-latched')), 'wheel preserves explicit open state');
       await page.screenshot({ path: resolve(output, `revealed-${name}.png`) });
       await leave(page, width);
       await page.screenshot({ path: resolve(output, `compact-${name}.png`) });
@@ -144,21 +160,30 @@ try {
       await page.waitForTimeout(420);
       assert.ok(await page.locator('html').evaluate(node => node.classList.contains('pl-header-revealed')), 'focus within the native header prevents timed hiding');
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('pl-header-revealed') && document.getElementById('titleText').getBoundingClientRect().top <= 13);
+      await leave(page, width);
       assert.equal(await page.locator('.pl-intro-header-toggle').evaluate(node => document.activeElement === node), true, 'Escape returns focus to the planner header control');
 
       // Menu state, rather than focus alone, must hold the reveal open.
       await reveal(page); await page.locator('#fixture-native-menu-toggle').click();
+      const originalMenuStyle=await page.locator('#fixture-native-menu').getAttribute('style');
+      for(const height of [104,214,382,560]) {
+        await page.locator('#fixture-native-menu').evaluate((node,height)=>{node.style.height=`${height}px`;},height);
+        await page.waitForTimeout(120);
+        const menuBottom=await page.locator('#fixture-native-menu').evaluate(node=>node.getBoundingClientRect().bottom);
+        const bounds=await page.evaluate(()=>({workspace:document.querySelector('.pl-workspace-host').getBoundingClientRect().top,term:document.getElementById('ctl00_MainContent_termSessionChooser').getBoundingClientRect().bottom}));
+        assert.ok(bounds.workspace>=Math.max(menuBottom,bounds.term)-1,`workspace clears menu ${height}: ${JSON.stringify({menuBottom,...bounds})}`);
+      }
+      await page.locator('#fixture-native-menu').evaluate((node,style)=>{if(style===null)node.removeAttribute('style');else node.setAttribute('style',style);},originalMenuStyle);
       await page.locator('.pl-intro-header-toggle').focus(); await page.mouse.move(width - 24, 930); await page.waitForTimeout(420);
       assert.ok(await page.locator('html').evaluate(node => node.classList.contains('pl-header-revealed')), 'an open native menu keeps the header visible after focus moves away');
       await page.evaluate(() => window.fixtureSetMenu(false));
-      await page.waitForFunction(() => !document.documentElement.classList.contains('pl-header-revealed') && document.getElementById('titleText').getBoundingClientRect().top <= 13);
+      await leave(page, width);
 
       const touchTarget = await page.locator('.pl-intro-header-edge').boundingBox();
       assert.ok(touchTarget); await page.touchscreen.tap(touchTarget.x + touchTarget.width / 2, touchTarget.y + touchTarget.height / 2);
       await page.waitForFunction(() => document.documentElement.classList.contains('pl-header-revealed') && scrollY <= 1);
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('pl-header-revealed') && document.getElementById('titleText').getBoundingClientRect().top <= 13);
+      await leave(page, width);
 
       // A real primary gesture must not move its native target before click.
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -170,10 +195,11 @@ try {
       assert.equal(await page.evaluate(() => window.fixtureHarmlessClicks), 0, 'pointerdown does not activate or replay the native action');
       await page.mouse.move(safeBounds.x + safeBounds.width / 2 + 2, safeBounds.y + safeBounds.height / 2 + 2);
       await page.mouse.up();
-      assert.equal(await page.evaluate(() => window.fixtureHarmlessClicks), 1, 'the trusted native click fires exactly once before instant outside dismissal');
-      await page.waitForFunction(() => !document.documentElement.classList.contains('pl-header-revealed') && document.getElementById('titleText').getBoundingClientRect().top <= 13);
+      assert.equal(await page.evaluate(() => window.fixtureHarmlessClicks), 1, 'the trusted native click fires exactly once without closing the header');
+      await leave(page, width);
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.keyboard.press('Tab'); await page.locator('.pl-intro-header-edge').focus();
+      await page.waitForTimeout(180);
       const keyboardTarget = await page.locator('.pl-intro-header-edge').boundingBox();
       assert.ok(keyboardTarget && keyboardTarget.height >= 24 && keyboardTarget.width >= 100, 'keyboard focus gives the header control a visible labeled target');
       await page.keyboard.press('Enter');
@@ -187,6 +213,11 @@ try {
         controls: [...node.querySelectorAll('button.link')].map(button => ({ background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color, border: getComputedStyle(button).borderTopWidth, icon: button.querySelector('i') ? getComputedStyle(button.querySelector('i')).color : null })),
       })); report.notice = notice;
       if (appearance === 'dark') {
+        for (const [selector, expected] of [['.classPlanner_Labels','rgb(255, 155, 166)'],['.classPlanner_TermReq','rgb(243, 201, 121)'],['.label.warning','rgb(243, 201, 121)'],['.badge.info','rgb(184, 220, 255)']]) {
+          const sample=await page.locator(selector).first().evaluate(node=>({color:getComputedStyle(node).color,background:getComputedStyle(node).backgroundColor}));
+          assert.equal(sample.color,expected,`${selector} uses dark semantic colors`);
+          assert.ok(contrast(sample.color,alpha(sample.background) ? sample.background : notice.surface)>=4.5,`${selector} contrast`);
+        }
         assert.equal(alpha(notice.background), 0, 'dark inline notices do not become a separate colored banner');
         for (const control of notice.controls) {
           assert.equal(alpha(control.background), 0, 'native notice links and help keep a transparent background');
@@ -201,10 +232,17 @@ try {
 
       await page.getByRole('button', { name: 'Show header', exact: true }).click();
       await page.waitForFunction(key => window.fixtureStored[key].compact === false && scrollY <= 1, headerKey);
-      assert.equal(await page.locator('.pl-intro-header-edge').isVisible(), false, 'explicit Show header leaves the header expanded');
-      await page.getByRole('button', { name: 'Compact header', exact: true }).click();
+      assert.equal(await page.locator('.pl-intro-header-edge').isVisible(), true, 'saved expanded view retains the close arrow');
+      await page.mouse.move(4,400);await page.mouse.wheel(0,1200);await page.waitForTimeout(250);
+      assert.ok(await page.evaluate(()=>scrollY<=1),'left navigation wheel preserves saved expanded view');
+      await page.locator('.pl-intro-header-edge').click();
       await page.waitForFunction(key => window.fixtureStored[key].compact === true && document.getElementById('titleText').getBoundingClientRect().top <= 13, headerKey);
       assert.equal(await page.evaluate(key => window.fixtureWrites.filter(write => key in write).length, headerKey), 2, 'only the two explicit persistent toggles write the preference');
+      await page.mouse.move(4,400);await page.mouse.wheel(0,2400);await page.waitForTimeout(250);
+      assert.ok(await page.evaluate(()=>Math.abs(document.getElementById('titleText').getBoundingClientRect().top-12)<=1),'compact root cannot drift down from sidebar wheel');
+      await page.evaluate(()=>document.documentElement.classList.add('pl-has-actionbar'));
+      assert.ok(await page.locator('.pl-workspace-host').evaluate(node=>Math.abs(node.getBoundingClientRect().bottom-innerHeight)<=1),'actionbar reserve keeps workspace background to viewport bottom');
+      await page.evaluate(()=>document.documentElement.classList.remove('pl-has-actionbar'));
 
       report.beforePrint = await geometry(page);
       await page.emulateMedia({ media: 'print' }); await frame(page); report.duringPrint = await geometry(page);

@@ -179,6 +179,7 @@ export class PlannerWorkspace {
   private planHeaderHeight = 60;
   private headerHelp=new Map<HTMLElement,{hadStyle:boolean;hadClass:boolean;properties:{name:string;value:string;priority:string}[]}>();
   private summaries = new Map<HTMLElement,{node:HTMLElement;table:HTMLTableElement;signature:string}>();
+  private courseTargets = new Map<HTMLElement,()=>void>();
   private drag: {start:number; width:number; pointerId:number} | null = null;
   private browser = new CourseBrowserPresentation();
   private introduction: PlannerIntroduction;
@@ -359,16 +360,27 @@ export class PlannerWorkspace {
     this.introduction.mount(doc,this.state.top,this.state.resize,{navigation:this.state.navFooter,onInformation:()=>this.selectModule("information",true),onCloseInformation:()=>{this.selectModule(this.previousModule);doc.querySelector<HTMLButtonElement>(".pl-intro-info")?.focus({preventScroll:true});}});
     this.browser.reconcile(doc);
     for(const host of this.actionControls.keys())if(!courses.some(course=>course.node.contains(host)))this.removeActions(host);
+    for(const [card,cleanup]of this.courseTargets)if(!courses.some(course=>course.node===card)){cleanup();this.courseTargets.delete(card);}
     for (const course of courses) {
       const host = course.node.querySelector<HTMLElement>(":scope > tr:first-child > td.linkPanelRight");
       if (!host) continue;
-      let button=host.querySelector<HTMLButtonElement>("[data-pl-workspace-details]");
+      let button=course.node.querySelector<HTMLElement>("[data-pl-workspace-details]");
       if(!button){
-        button=doc.createElement("button");
-        button.type="button";button.className="pl-workspace-detail-button";
-        button.setAttribute(OWNED,"true");button.dataset.plWorkspaceDetails="true";
-        button.textContent="Details";button.setAttribute("aria-label",`Details for ${course.label}`);button.setAttribute("aria-expanded","false");
-        const details=button;button.addEventListener("click",()=>this.openPreview(course,details));host.prepend(button);
+        this.courseTargets.get(course.node)?.();this.courseTargets.delete(course.node);
+        button=course.node.querySelector<HTMLElement>(":scope > tr:first-child > td.SubjectAreaName_ClassName > p");
+        if(!button)continue;
+        const details=button, attributes=["role","tabindex","aria-label","aria-expanded","data-pl-workspace-details"].map(name=>[name,details.getAttribute(name)] as const);
+        details.setAttribute("role","button");details.tabIndex=0;details.dataset.plWorkspaceDetails="true";
+        details.setAttribute("aria-label",`Details for ${course.label}`);details.setAttribute("aria-expanded","false");
+        const click=(event:MouseEvent)=>{
+          const target=event.target instanceof Element?event.target:null;
+          if(event.defaultPrevented||event.button!==0||!target||target.closest('button,a,input,select,textarea,summary,[contenteditable],.pl-grip,[data-pl-real-tools]')||target.closest('tr')!==course.node.firstElementChild)return;
+          if(doc.getSelection()?.toString())return;
+          this.openPreview(course,details);
+        };
+        const key=(event:KeyboardEvent)=>{if(event.target===details&&(event.key==="Enter"||event.key===" ")){event.preventDefault();this.openPreview(course,details);}};
+        course.node.addEventListener("click",click);details.addEventListener("keydown",key);
+        this.courseTargets.set(course.node,()=>{course.node.removeEventListener("click",click);details.removeEventListener("keydown",key);for(const [name,value]of attributes){if(value===null)details.removeAttribute(name);else details.setAttribute(name,value);}});
       }
       // Both owned entry points precede the unchanged native control groups.
       this.ensureActions(course,host,button);
@@ -410,7 +422,7 @@ export class PlannerWorkspace {
     }
   }
 
-  private ensureActions(course:CourseSnapshot,host:HTMLElement,details:HTMLButtonElement):void {
+  private ensureActions(course:CourseSnapshot,host:HTMLElement,details:HTMLElement):void {
     const previous=this.actionControls.get(host),nativeTools=host.querySelector(".OrderingButtons"),ownedTools=host.querySelector(":scope > [data-pl-real-tools]");
     const restoreFocus=this.actionsHost===host&&host.contains(host.ownerDocument.activeElement);
     if(previous&&(previous.button.parentElement!==host||previous.nativeTools!==nativeTools||previous.ownedTools!==ownedTools))this.removeActions(host);
@@ -437,7 +449,7 @@ export class PlannerWorkspace {
         menu.open=false;menu.querySelector<HTMLElement>("summary")?.focus({preventScroll:true});event.preventDefault();
       }
     };
-    host.addEventListener("keydown",key,true);details.after(button);
+    host.addEventListener("keydown",key,true);host.prepend(button);
     this.actionControls.set(host,{button,nativeTools,ownedTools,key});
     if(restoreFocus)button.focus({preventScroll:true});
   }
@@ -683,7 +695,10 @@ export class PlannerWorkspace {
     };
     const printChanged=()=>{if(printMedia?.matches)beforePrint();else afterPrint();};
     const stopPrint=()=>{printMedia?.removeEventListener("change",printChanged);if(printFrame!==null)view?.cancelAnimationFrame(printFrame);printFrame=null;};
-    const actionObserver=new MutationObserver(()=>this.syncPlanSurfaces());
+    const hostHadStyle=host.hasAttribute("style");
+    const syncNoticeCount=()=>host.style.setProperty("--pl-notice-count",String(host.querySelectorAll(":scope > .classPlanner_Messages").length));
+    syncNoticeCount();
+    const actionObserver=new MutationObserver(()=>{syncNoticeCount();this.syncPlanSurfaces();});
     const helpObserver=new MutationObserver(()=>this.positionHeaderHelp());
     const actionClick=(event:MouseEvent)=>{
       const target=event.target instanceof Element?event.target:null;
@@ -694,7 +709,7 @@ export class PlannerWorkspace {
       if(!this.activePlanSurface&&target&&!extras.contains(target)&&!target.closest('.pl-plan-action-surface,[role="dialog"],dialog[open],.ui-dialog'))extras.open=false;
     };
     const layout=new PanelLayoutController(doc,deck,(id,placement,reason,operation)=>this.panelLayoutChanged(id,placement,reason,operation));
-    this.state={doc,host,panel,deck,top,extras,menu,placements,preview,head,content,close,panes,splitters:[splitter,...dockSplitters],empty,widenSchedule,shell,main,navMain,navFooter,slot,moduleButtons,mobileMain,mobileSchedule,scheduleNav,position,scrollRoom,hostHadStyle:host.hasAttribute("style"),resize,key,detailsScroll,calendarScroll,move,end,beforePrint,afterPrint,printing,stopPrint,actionObserver,actionClick,helpObserver,layout,detailsFrame,detailIndex,navigation,navToggle,navDivider,navMove,navEnd,groupStrips,groupTabs};
+    this.state={doc,host,panel,deck,top,extras,menu,placements,preview,head,content,close,panes,splitters:[splitter,...dockSplitters],empty,widenSchedule,shell,main,navMain,navFooter,slot,moduleButtons,mobileMain,mobileSchedule,scheduleNav,position,scrollRoom,hostHadStyle,resize,key,detailsScroll,calendarScroll,move,end,beforePrint,afterPrint,printing,stopPrint,actionObserver,actionClick,helpObserver,layout,detailsFrame,detailIndex,navigation,navToggle,navDivider,navMove,navEnd,groupStrips,groupTabs};
     this.settings = new WorkspaceSettings(doc, navFooter, {
       onPreset: id => this.applyLayoutPreset(id),
       onDefault: () => this.state?.layout.reset()
@@ -731,8 +746,9 @@ export class PlannerWorkspace {
     // UCLA navigation and original menus remain in their original ancestry.
     // Root scrolling is intentional: UCLA's unchanged header can scroll away.
     // BODY stays non-scrollable; only the document and individual panes scroll.
-    const marker=s.position.getBoundingClientRect(),top=this.introduction.isHeaderCompact()||marker.top<=13?0:Math.ceil(marker.top);
+    const marker=s.position.getBoundingClientRect(),top=this.introduction.isHeaderCompact()?0:Math.ceil(Math.max(marker.top<=13?0:marker.top,this.introduction.headerClearance()));
     s.host.style.setProperty("--pl-workspace-top",`${top}px`);s.host.classList.toggle("pl-workspace-flow",top>0&&view.innerHeight-top<400);
+    s.host.style.setProperty("--pl-workspace-flow-offset",`${Math.max(0,top-marker.top)+8}px`);
     s.host.style.setProperty("--pl-workspace-left",`${marker.left}px`);
     s.host.style.setProperty("--pl-workspace-width",`${s.doc.documentElement.clientWidth}px`);
     s.scrollRoom.style.height=`${Math.max(0,view.innerHeight-28)}px`;
@@ -1628,8 +1644,8 @@ export class PlannerWorkspace {
       if(anchor.isConnected&&current)anchor.replaceWith(current);else anchor.remove();
     }
     PRIMARY.forEach(([, ,cls])=>s.doc.querySelectorAll(`.${cls}`).forEach(n=>n.classList.remove(cls)));
-    s.doc.querySelectorAll("[data-pl-workspace-details]").forEach(n=>n.remove());
-    s.preview.remove();s.detailsFrame.remove();s.deck.remove();s.shell.remove();s.top.remove();s.position.remove();s.scrollRoom.remove();["--pl-workspace-top","--pl-workspace-left","--pl-workspace-width"].forEach(p=>s.host.style.removeProperty(p));
+    for(const cleanup of this.courseTargets.values())cleanup();this.courseTargets.clear();
+    s.preview.remove();s.detailsFrame.remove();s.deck.remove();s.shell.remove();s.top.remove();s.position.remove();s.scrollRoom.remove();["--pl-workspace-top","--pl-workspace-left","--pl-workspace-width","--pl-notice-count","--pl-workspace-flow-offset"].forEach(p=>s.host.style.removeProperty(p));
     if(!s.hostHadStyle&&!s.host.getAttribute("style"))s.host.removeAttribute("style");s.host.classList.remove("pl-workspace-host","pl-workspace-flow","pl-task-plan","pl-task-find","pl-show-schedule","pl-workspace-empty-plan","pl-navigation-collapsed","pl-grouped-workspace");delete s.host.dataset.plModule;delete s.host.dataset.plGroupsCompact;s.doc.documentElement.classList.remove("pl-workspace-page","pl-panel-drag-in-progress");
   }
 }

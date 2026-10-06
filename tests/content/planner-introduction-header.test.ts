@@ -16,6 +16,10 @@ describe("temporary access to the original UCLA header", () => {
     const event = new MouseEvent(type, { relatedTarget, buttons });
     Object.defineProperty(event, "pointerType", { value: pointerType }); node.dispatchEvent(event);
   };
+  const openTemporary = () => {
+    masthead.dispatchEvent(new FocusEvent("focusin",{bubbles:true}));
+    toggle().focus();
+  };
   const shadowHeader = () => {
     masthead.replaceChildren();
     const outer = masthead.attachShadow({mode: "open"}), component = document.createElement("header-header");
@@ -49,9 +53,22 @@ describe("temporary access to the original UCLA header", () => {
   });
   afterEach(() => { introduction.restore(); vi.clearAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-  it("smoothly reveals on top-edge hover, then collapses after leaving the original menu without saving", async () => {
+  it("keeps a clicked header open through departure, focus changes and outside clicks until clicked closed", () => {
+    edge().click();expect(revealed()).toBe(true);
+    expect(document.documentElement.classList.contains('pl-header-latched')).toBe(true);
+    expect(edge().getAttribute('aria-label')).toBe('Hide UCLA header');
+    pointer(edge(),'pointerleave',document.body);toggle().focus();
+    document.body.click();window.dispatchEvent(new Event('blur'));vi.advanceTimersByTime(2000);
+    expect(revealed()).toBe(true);expect(save).not.toHaveBeenCalled();
+    edge().click();expect(revealed()).toBe(false);expect(document.activeElement).toBe(toggle());
+    expect(document.documentElement.classList.contains('pl-header-latched')).toBe(false);
+    edge().click();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+    expect(revealed()).toBe(false);expect(save).not.toHaveBeenCalled();
+  });
+
+  it("preserves temporary keyboard access to native navigation and its leave behavior without saving", async () => {
     const original = masthead.outerHTML, parent = masthead.parentElement, form = nativeButton.form;
-    pointer(edge(), "pointerenter");
+    openTemporary();
     expect(revealed()).toBe(true); expect(scrollY).toBe(0);
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "smooth" });
     expect(edge().getAttribute("aria-expanded")).toBe("true");
@@ -72,12 +89,12 @@ describe("temporary access to the original UCLA header", () => {
     pointer(edge(), "pointerenter", null, 1);
     pointer(edge(), "pointerenter", null, 0, "touch");
     expect(revealed()).toBe(false); expect(window.scrollTo).not.toHaveBeenCalled();
-    edge().focus(); edge().click();
+    edge().focus(); openTemporary();
     expect(revealed()).toBe(true); expect(scrollY).toBe(0); expect(save).not.toHaveBeenCalled();
   });
 
   it("honors reduced motion without changing the saved compact preference", () => {
-    reduced = true; pointer(edge(), "pointerenter");
+    reduced = true; openTemporary();
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
     pointer(edge(), "pointerleave", document.body); vi.advanceTimersByTime(280);
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 166, behavior: "instant" });
@@ -94,7 +111,7 @@ describe("temporary access to the original UCLA header", () => {
   });
 
   it("waits for an expanded native menu to close before leaving the header", async () => {
-    pointer(edge(), "pointerenter"); nativeButton.setAttribute("aria-expanded", "true");
+    openTemporary(); nativeButton.setAttribute("aria-expanded", "true");
     pointer(edge(), "pointerleave", document.body); vi.advanceTimersByTime(280);
     expect(revealed()).toBe(true);
     nativeButton.setAttribute("aria-expanded", "false"); await Promise.resolve();
@@ -108,7 +125,7 @@ describe("temporary access to the original UCLA header", () => {
     Object.defineProperty(button, "textContent", {configurable: true, get: () => { throw Error("Native menu text must not be read"); }});
     Object.defineProperty(button, "value", {configurable: true, get: () => { throw Error("Native menu values must not be read"); }});
     button.setAttribute("aria-expanded", "true");
-    pointer(edge(), "pointerenter"); pointer(edge(), "pointerleave", document.body);
+    openTemporary(); pointer(edge(), "pointerleave", document.body);
     vi.advanceTimersByTime(280); expect(revealed()).toBe(true); expect(scrollY).toBe(0);
     button.setAttribute("aria-expanded", "false"); await Promise.resolve();
     vi.advanceTimersByTime(280); expect(revealed()).toBe(false); expect(scrollY).toBe(166);
@@ -131,7 +148,7 @@ describe("temporary access to the original UCLA header", () => {
   it.each(["hidden", "display"])("does not hold a shadow menu behind a %s native ancestor", mode => {
     const {button, component} = shadowHeader(); button.setAttribute("aria-expanded", "true");
     if (mode === "hidden") component.hidden = true; else component.style.display = "none";
-    pointer(edge(), "pointerenter"); pointer(edge(), "pointerleave", document.body);
+    openTemporary(); pointer(edge(), "pointerleave", document.body);
     vi.advanceTimersByTime(280); expect(revealed()).toBe(false); expect(scrollY).toBe(166);
     expect(save).not.toHaveBeenCalled();
   });
@@ -139,14 +156,14 @@ describe("temporary access to the original UCLA header", () => {
   it("observes visible role menus inside shadow roots even without aria-expanded", async () => {
     const {menu} = shadowHeader(); menu.hidden = false;
     vi.spyOn(menu, "getClientRects").mockReturnValue([{width: 200, height: 90}] as unknown as DOMRectList);
-    pointer(edge(), "pointerenter"); pointer(edge(), "pointerleave", document.body);
+    openTemporary(); pointer(edge(), "pointerleave", document.body);
     vi.advanceTimersByTime(280); expect(revealed()).toBe(true);
     menu.hidden = true; await Promise.resolve(); vi.advanceTimersByTime(280);
     expect(revealed()).toBe(false); expect(save).not.toHaveBeenCalled();
   });
 
   it("Escape dismisses the temporary header and returns focus to Show header", () => {
-    edge().focus(); edge().click(); nativeButton.focus();
+    edge().focus(); openTemporary(); nativeButton.focus();
     const escape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
     nativeButton.dispatchEvent(escape);
     expect(escape.defaultPrevented).toBe(true); expect(revealed()).toBe(false);
@@ -155,52 +172,21 @@ describe("temporary access to the original UCLA header", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
-  it("keeps Escape closed under a stationary pointer until deliberate departure and reentry", () => {
-    vi.spyOn(edge(), "getBoundingClientRect").mockReturnValue({left: 0, top: 0, right: 1000, bottom: 8, width: 1000, height: 8} as DOMRect);
+  it("never opens from hovering or crossing the top edge, including after Escape", () => {
     pointer(edge(), "pointerenter");
-    document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
-    // The collapsing page re-hits the top sensor without any mouse movement.
+    pointer(masthead, "pointerenter");
+    vi.advanceTimersByTime(1000);
+    expect(revealed()).toBe(false); expect(scrollY).toBe(166);
+    openTemporary(); expect(revealed()).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", {key:"Escape",bubbles:true,cancelable:true}));
     pointer(edge(), "pointerenter"); pointer(masthead, "pointerenter");
-    vi.advanceTimersByTime(1000); expect(revealed()).toBe(false); expect(scrollY).toBe(166);
-    document.dispatchEvent(new MouseEvent("pointermove", {clientX: 500, clientY: 4, bubbles: true}));
-    pointer(edge(), "pointerenter"); expect(revealed()).toBe(false);
-    document.dispatchEvent(new MouseEvent("pointermove", {clientX: 500, clientY: 40, bubbles: true}));
-    pointer(edge(), "pointerenter"); expect(revealed()).toBe(true); expect(scrollY).toBe(0);
+    vi.advanceTimersByTime(1000); expect(revealed()).toBe(false);
+    openTemporary(); expect(revealed()).toBe(true);
     expect(save).not.toHaveBeenCalled();
   });
-
-  it("still accepts an explicit edge click or keyboard focus after Escape suppressed hover", () => {
-    pointer(edge(), "pointerenter");
-    document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
-    edge().click(); expect(revealed()).toBe(true);
-    document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
-    nativeButton.focus(); expect(revealed()).toBe(true); expect(document.activeElement).toBe(nativeButton);
-    expect(save).not.toHaveBeenCalled();
-  });
-
-  it("accepts the next direct hover after Escape when the pointer was already outside the edge", () => {
-    vi.spyOn(edge(), "getBoundingClientRect").mockReturnValue({left: 0, top: 0, right: 1000, bottom: 8, width: 1000, height: 8} as DOMRect);
-    pointer(edge(), "pointerenter");
-    document.dispatchEvent(new MouseEvent("pointermove", {clientX: 500, clientY: 300, bubbles: true}));
-    document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
-    expect(revealed()).toBe(false);
-    // Browser boundary events may arrive before the new pointermove event.
-    pointer(edge(), "pointerenter");
-    expect(revealed()).toBe(true); expect(scrollY).toBe(0); expect(save).not.toHaveBeenCalled();
-  });
-
-  it("uses the unfocused sensor bounds when Escape closes its taller keyboard button", () => {
-    vi.spyOn(edge(), "getBoundingClientRect").mockImplementation(() => ({left: 0, top: 0, right: 1000, bottom: document.activeElement === edge() ? 30 : 8}) as DOMRect);
-    edge().focus(); edge().click();
-    document.dispatchEvent(new MouseEvent("pointermove", {clientX: 500, clientY: 20, bubbles: true}));
-    edge().dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
-    expect(document.activeElement).toBe(toggle()); expect(revealed()).toBe(false);
-    pointer(edge(), "pointerenter"); expect(revealed()).toBe(true);
-  });
-
   it("waits for the native outside click before collapsing even with reduced motion", () => {
     reduced = true;
-    edge().focus(); edge().click(); expect(revealed()).toBe(true);
+    edge().focus(); openTemporary(); expect(revealed()).toBe(true);
     const outside = document.getElementById("searchTier0")!, action = vi.fn(() => expect(revealed()).toBe(true));
     outside.addEventListener("click", action);
     const down = new MouseEvent("pointerdown", {button: 0, bubbles: true, cancelable: true});
@@ -215,7 +201,7 @@ describe("temporary access to the original UCLA header", () => {
   });
 
   it.each(["pointerup", "pointercancel"])("does not collapse under a held primary gesture, then releases on %s", end => {
-    reduced = true; pointer(edge(), "pointerenter");
+    reduced = true; openTemporary();
     document.body.dispatchEvent(new MouseEvent("pointerdown", {button: 0, bubbles: true}));
     pointer(edge(), "pointerleave", document.body);
     vi.advanceTimersByTime(1200); expect(revealed()).toBe(true); expect(scrollY).toBe(0);
@@ -233,17 +219,17 @@ describe("temporary access to the original UCLA header", () => {
   });
 
   it("the explicit Show header button pins the banner open and persists exactly that choice", async () => {
-    pointer(edge(), "pointerenter"); toggle().click();
+    openTemporary(); toggle().click();
     await Promise.resolve(); await Promise.resolve();
     expect(save).toHaveBeenCalledExactlyOnceWith(false);
     expect(revealed()).toBe(false); expect(scrollY).toBe(0);
-    expect(toggle().textContent).toBe("Compact header"); expect(edge().hidden).toBe(true);
+    expect(toggle().textContent).toBe("Compact header"); expect(edge().hidden).toBe(false);
     pointer(edge(), "pointerleave", document.body); vi.advanceTimersByTime(1000);
     expect(scrollY).toBe(0); expect(save).toHaveBeenCalledOnce();
   });
 
   it("does not snap a smooth collapse before scrollend reaches its target", () => {
-    pointer(edge(), "pointerenter"); window.dispatchEvent(new Event("scrollend"));
+    openTemporary(); window.dispatchEvent(new Event("scrollend"));
     vi.mocked(window.scrollTo).mockImplementation(() => { scrollY = 80; });
     pointer(edge(), "pointerleave", document.body); vi.advanceTimersByTime(280);
     const calls = vi.mocked(window.scrollTo).mock.calls.length;

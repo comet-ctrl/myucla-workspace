@@ -1,5 +1,32 @@
 # MyUCLA Class Planner 脱敏页面合约
 
+## Centered header hint (current local follow-up)
+
+Course details are toggled by the recorded course heading (role=button,
+keyboard Enter/Space) and noninteractive content in its first row. There is no
+separate Details button. Native controls, tool editors, dragging and text
+selection must not toggle details. Restore heading attributes/listeners exactly.
+When the original header is visible, workspace clearance measures rendered
+native surfaces in bounded open shadow roots, including menus that extend past
+the header box. Native structure, handlers and text remain untouched. Existing
+mutation events and ResizeObserver update geometry without polling or requests;
+short windows retain a flow gap instead of overlapping the menu or term chooser.
+
+The compact header uses an extension-owned centered 80px hint rather than a
+full-width hover activation strip. Hover exposes an arrow only; explicit click
+reveals the original header and keeps it open until the visible upward arrow
+is clicked or Escape is pressed. Pointer departure, outside clicks and blur
+must not dismiss an explicitly opened header. Reserve a 32px owned close-control
+gap below the native surfaces. Preserve temporary native keyboard access,
+and bound root scroll during explicit opening to the travel required by
+oversized native surfaces; local pane scrolling remains independent.
+Saved-expanded views also retain the upward close arrow and bounded root
+travel; their arrow saves the existing compact boolean. Compact root alignment
+is fixed at the public heading offset. Workspace background covers the bottom
+actionbar reserve while content retains internal spacing.
+reduced motion and cleanup. Hover never scrolls or
+writes preferences. No native content, controls, requests or permissions change.
+
 ## Appearance (0.19.1)
 
 System, Light and Dark change presentation only. Apply the appearance attribute
