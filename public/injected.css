@@ -1398,7 +1398,7 @@ html.pl-workspace-page body, html.pl-intro-page body { height: auto; min-height:
   html.pl-workspace-page, html.pl-intro-page { scrollbar-width: none; }
   html.pl-workspace-page::-webkit-scrollbar, html.pl-intro-page::-webkit-scrollbar { display: none; }
   button.pl-intro-header-edge {
-    position: fixed; z-index: 118; inset: 0 0 auto; width: 100%; height: 8px;
+    position: fixed; z-index: 118; inset: 0 auto auto 50%; transform: translateX(-50%); width: 80px; height: 10px;
     box-sizing: border-box; margin: 0; padding: 0; border: 0;
     background: transparent; color: transparent; cursor: pointer;
     font: 12px/28px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
@@ -1408,7 +1408,16 @@ html.pl-workspace-page body, html.pl-intro-page body { height: auto; min-height:
     width: 48px; height: 3px; border-radius: 3px; background: #8195ac;
     transition: width 140ms ease, left 140ms ease, background-color 140ms ease;
   }
-  button.pl-intro-header-edge:hover::after { width: 64px; left: calc(50% - 32px); background: #386b9e; }
+  button.pl-intro-header-edge:hover {
+    height: 32px; border: 1px solid #8195ac; border-top: 0; border-radius: 0 0 8px 8px;
+    background: #f8fafc; color: transparent;
+  }
+  button.pl-intro-header-edge:hover::after {
+    top: 10px; left: calc(50% - 4px); width: 8px; height: 8px; border-radius: 0;
+    border-right: 2px solid #315776; border-bottom: 2px solid #315776;
+    background: transparent; transform: rotate(45deg);
+  }
+  button.pl-intro-header-edge { transition: height 140ms ease, background-color 140ms ease; }
   button.pl-intro-header-edge:focus-visible {
     inset: 0 auto auto 50%; transform: translateX(-50%); width: 132px; height: 30px;
     border: 1px solid #8195ac; border-top: 0; border-radius: 0 0 7px 7px;
@@ -1416,23 +1425,31 @@ html.pl-workspace-page body, html.pl-intro-page body { height: auto; min-height:
   }
   button.pl-intro-header-edge:focus-visible::after { display: none; }
   html.pl-header-revealed button.pl-intro-header-edge:not(:focus-visible) { opacity: 0; pointer-events: none; }
+  html.pl-header-latched button.pl-intro-header-edge {
+    top: var(--pl-header-edge-top,0px);height:30px;opacity:1 !important;pointer-events:auto !important;z-index:1000;
+    border:1px solid #8195ac;border-radius:7px;background:#f8fafc;
+  }
+  html.pl-header-latched button.pl-intro-header-edge::after {
+    top:12px;left:calc(50% - 4px);width:8px;height:8px;border-radius:0;
+    background:transparent;border-right:2px solid #315776;border-bottom:2px solid #315776;transform:rotate(225deg);
+  }
   button.pl-intro-header-edge[hidden] { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { button.pl-intro-header-edge::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { button.pl-intro-header-edge, button.pl-intro-header-edge::after { transition: none; } }
 @media print { button.pl-intro-header-edge { display: none !important; } }
 html.pl-intro-page section#layoutContentArea.pl-planner-introduction { min-height: calc(100dvh - 12px); }
 .pl-intro-toolbar { justify-content: flex-end; }
 .classPlannerWrapper.pl-workspace-host {
   position: fixed; top: var(--pl-workspace-top,0px); left: 0; z-index: 100;
-  height: calc(100dvh - var(--pl-workspace-top,0px) - var(--pl-workspace-bottom,0px));
+  height: calc(100dvh - var(--pl-workspace-top,0px));
   display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto minmax(0,1fr); min-width: 0; width: var(--pl-workspace-width,100%) !important;
   margin: 0 !important;
-  padding: 0; box-sizing: border-box; border: 0;
+  padding: 0 0 var(--pl-workspace-bottom,0px); box-sizing: border-box; border: 0;
   border-radius: 0; background: #fff; overflow: hidden;
   color: #263344; font: 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 html.pl-workspace-page.pl-has-actionbar .pl-workspace-host { --pl-workspace-bottom: 56px; }
-.classPlannerWrapper.pl-workspace-host.pl-workspace-flow { position: relative; top: auto; left: auto; height: 640px; margin-left: calc(16px - var(--pl-workspace-left,16px)) !important; }
+.classPlannerWrapper.pl-workspace-host.pl-workspace-flow { position: relative; top: auto; left: auto; height: 640px; margin-left: calc(16px - var(--pl-workspace-left,16px)) !important; margin-top: var(--pl-workspace-flow-offset,0px) !important; }
 .pl-workspace-position { height: 0; margin: 0; padding: 0; }
 .pl-workspace-scroll-room { margin: 0; padding: 0; pointer-events: none; }
 .pl-workspace-flow + .pl-workspace-scroll-room { display: none; }
@@ -1889,9 +1906,9 @@ section#layoutContentArea.pl-planner-introduction {
 }
 .pl-workspace-plan table.coursetable, .pl-workspace-plan table.coursetable .pl-section-field { font-family: inherit; }
 .pl-workspace-plan tbody.pl-workspace-preview-card > tr:nth-child(3) > td { display: block; padding: 0 !important; border: 0 !important; border-radius: 0; width: 100%; box-sizing: border-box; }
-/* Keep the section and its metadata in a readable group on large displays,
-   rather than stretching a handful of values across the whole workspace. */
-.pl-workspace-plan tbody.pl-workspace-preview-card > tr:nth-child(3) > td { max-width: 1040px; }
+/* Align the native details content and close control with the pane's edges
+   in every workspace preset, including wide single-pane layouts. */
+.pl-workspace-plan tbody.pl-workspace-preview-card > tr:nth-child(3) > td { max-width: none; }
 .pl-preview-docked .pl-section-card { border: 0; border-bottom: 1px solid #e1e7ee; border-radius: 0; margin: 0; padding: 12px 0; gap: 8px 10px; }
 /* Details use the native nine-cell table, with primary fields sharing a row
    when the actual details area has room. Native cells and handlers stay put. */
@@ -2368,6 +2385,7 @@ section#layoutContentArea.pl-planner-introduction {
   .pl-workspace-plan td.linkPanelRight:not(.pl-course-actions-open) > .OrderingButtons { display: block !important; height: 0; margin: 0; padding: 0; }
   .pl-workspace-plan td.linkPanelRight:not(.pl-course-actions-open) > .OrderingButtons > :not(input[type="color"]):not(:has(input[type="color"])) { display: none; }
   .pl-workspace-plan .OrderingButtons :has(input[type="color"]) { display: contents; }
+  .pl-workspace-plan td.linkPanelRight:not(.pl-course-actions-open) .OrderingButtons :is(button,input:not([type="color"]),a) { display: none !important; }
   .pl-workspace-plan .OrderingButtons input[type="color"] { position: absolute; top: 12px; right: 12px; box-sizing: border-box; width: 36px; height: 28px; margin: 0; padding: 2px; cursor: pointer; }
   .pl-workspace-plan .pl-course-menu { width: 100%; }
   .pl-workspace-plan .pl-course-menu-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; border: 0; background: transparent; }
@@ -2378,8 +2396,24 @@ section#layoutContentArea.pl-planner-introduction {
   .pl-workspace-plan td.linkPanelRight:not(.pl-course-actions-open) .pl-tag-editor { display: none !important; }
 }
 .pl-position-label { display: contents; }
+@media screen {
+  .pl-workspace-plan td.SubjectAreaName_ClassName { cursor: pointer; }
+  .pl-workspace-plan [data-pl-workspace-details]:focus-visible { outline: 2px solid #4184c2; outline-offset: 4px; border-radius: 4px; }
+}
 /* Flat secondary tools also remain usable in the original presentation. */
 div.pl-course-menu > .pl-course-menu-items { position: static; }
+
+/* Each native notice owns a separate row, including after native redraws. */
+@media screen {
+  .classPlannerWrapper.pl-workspace-host { grid-template-rows: auto repeat(var(--pl-notice-count,0),auto) minmax(0,1fr); }
+  .pl-workspace-host > .classPlanner_Messages { grid-row: auto; min-width: 0; height: auto !important; overflow-wrap: anywhere; line-height: 1.5; }
+  .pl-workspace-host > .pl-workspace-shell { grid-row: -2 / -1; }
+  .pl-tag-editor-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .pl-tag-editor-actions button { min-height: 36px; padding: 6px 12px; }
+}
+@media screen and (max-width:699px) {
+  .classPlannerWrapper.pl-workspace-host { grid-template-rows: auto auto repeat(var(--pl-notice-count,0),auto) minmax(0,1fr); }
+}
 
 /* Native feedback and section-action content remain in their original forms. */
 @media screen {

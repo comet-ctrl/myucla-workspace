@@ -30,16 +30,31 @@ export class PlannerIntroduction {
   private saveSequence = 0;
   private pendingSave: Promise<void> = Promise.resolve();
   private headerRevealed = false;
+  private headerLatched = false;
   private headerMotion: {target: number; timer: number} | null = null;
 
   constructor(private readonly onHeaderChange: (compact: boolean) => void | Promise<void> = () => {}) {}
 
   setHeaderCompact(compact: boolean): void {
-    this.stopHeaderMotion(); this.headerRevealed = false;
+    this.stopHeaderMotion(); this.headerRevealed = false;this.headerLatched=false;
     this.compactHeader = compact; this.positionHeader(); this.positionInfo();
   }
 
   isHeaderCompact(): boolean { return this.compactHeader && !this.headerRevealed; }
+
+  /** Measure native header/menu surfaces only, including open shadow roots. */
+  headerClearance(): number {
+    const s=this.state,view=s?.doc.defaultView;if(!s?.masthead||!view||this.isHeaderCompact())return 0;
+    let bottom=Math.max(0,s.masthead.getBoundingClientRect().bottom,s.term.getBoundingClientRect().bottom+8,s.title.getBoundingClientRect().bottom+8),count=0;
+    const roots:(HTMLElement|ShadowRoot)[]=[s.masthead];if(s.masthead.shadowRoot)roots.push(s.masthead.shadowRoot);
+    for(let index=0;index<roots.length&&count<2048;index++)for(const node of roots[index].querySelectorAll('*')){
+      if(++count>2048)break;
+      if(node.shadowRoot&&roots.length<32)roots.push(node.shadowRoot);
+      if(!node.getClientRects().length||view.getComputedStyle(node).visibility!=="visible")continue;
+      bottom=Math.max(bottom,node.getBoundingClientRect().bottom);
+    }
+    return bottom+(this.headerLatched||!this.compactHeader?32:0);
+  }
 
   private stopHeaderMotion(): void {
     if (this.headerMotion) this.state?.doc.defaultView?.clearTimeout(this.headerMotion.timer);
@@ -79,7 +94,7 @@ export class PlannerIntroduction {
 
   private concealHeader(returnFocus = false): void {
     const s = this.state; if (!s || !this.headerRevealed) return;
-    this.headerRevealed = false;
+    this.headerRevealed = false;this.headerLatched=false;
     if (returnFocus && s.header.isConnected) s.header.focus({preventScroll: true});
     this.moveHeader(this.compactTop());
   }
@@ -135,10 +150,11 @@ export class PlannerIntroduction {
       }
       // An unexpectedly huge native header stays accessible until an explicit
       // dismissal instead of concealing an uninspected menu.
+      for(const menu of candidates)resizeObserver?.observe(menu);
       return truncated || candidates.some(menu => rendered(menu) && (menu.matches('[aria-expanded="true"],details[open]') || menu.getClientRects().length > 0));
     };
     const scheduleLeave = () => {
-      cancelLeave(); if (!this.headerRevealed || heldPointer !== null) return;
+      cancelLeave(); if (this.headerLatched || !this.headerRevealed || heldPointer !== null) return;
       leaveTimer = view.setTimeout(() => {
         leaveTimer = 0;
         if (this.state === s && heldPointer === null && !hovering && !contains(doc.activeElement) && !menuOpen()) this.concealHeader();
@@ -147,7 +163,9 @@ export class PlannerIntroduction {
     const enter = (event: PointerEvent) => {
       locatePointer(event);
       if (event.pointerType === "touch" || event.buttons || suppressHover) return;
-      hovering = true; cancelLeave(); this.revealHeader();
+      // Hover only exposes the owned affordance via CSS. Opening the native
+      // header requires a click, or focus entering the native navigation.
+      hovering = true; cancelLeave();
     };
     const leave = (event: PointerEvent) => {
       locatePointer(event);
@@ -161,7 +179,14 @@ export class PlannerIntroduction {
       if (!suppressHover || event.pointerType === "touch") return;
       if (!pointerAtEdge()) suppressHover = false;
     };
-    const click = () => { if (this.state === s) { suppressHover = false; cancelLeave(); this.revealHeader(); } };
+    const click = (event: MouseEvent) => { if (this.state === s) {
+      if(!this.compactHeader){s.header.click();return;}
+      if(this.headerRevealed){this.concealHeader(true);return;}
+      // Pointer activation must not leave focus on the now-hidden tab and
+      // indefinitely prevent the usual leave dismissal. Keyboard keeps focus.
+      if (event.detail > 0) edge.blur();
+      suppressHover = false; cancelLeave();this.headerLatched=true; this.revealHeader();
+    } };
     const focusOut = () => scheduleLeave();
     const pointerDown = (event: PointerEvent) => {
       locatePointer(event);
@@ -174,16 +199,18 @@ export class PlannerIntroduction {
     };
     const blur = () => { heldPointer = null; scheduleLeave(); };
     const outsideClick = (event: MouseEvent) => {
-      if (event.button !== 0 || !this.headerRevealed || contains(event.target) || event.target === s.header) return;
+      if (this.headerLatched || event.button !== 0 || !this.headerRevealed || contains(event.target) || event.target === s.header) return;
       cancelLeave(); hovering = false;
       // Wait until the target's click handler has run. Moving the workspace on
       // pointerdown can move a native button away before its click completes.
       this.concealHeader(contains(doc.activeElement));
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented || !this.headerRevealed) return;
+      if (event.key !== "Escape" || event.defaultPrevented || (!this.headerRevealed&&this.compactHeader)) return;
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest('dialog[open],[role="dialog"],.ui-dialog') && !contains(target)) return;
+      if(!this.compactHeader&&!contains(event.target))return;
+      if(!this.compactHeader){s.header.click();event.preventDefault();return;}
       // Escape scrolls the edge back under the same pointer. Its resulting
       // pointerenter is layout-generated, not a fresh request to reopen.
       // Measure after focus return: the keyboard-focused edge is a taller
@@ -195,7 +222,9 @@ export class PlannerIntroduction {
       if (!this.headerMotion || Math.abs(view.scrollY - this.headerMotion.target) > 1) return;
       this.stopHeaderMotion(); this.positionHeader(); this.positionInfo(); s.onLayout();
     };
-    const observer = new MutationObserver(() => { if (!hovering) scheduleLeave(); });
+    const observer = new MutationObserver(() => { menuOpen();s.onLayout();if (!hovering) scheduleLeave(); });
+    const resizeObserver=typeof view.ResizeObserver==="function"?new view.ResizeObserver(()=>s.onLayout()):null;
+    resizeObserver?.observe(masthead);
     menuOpen();
     for (const node of [masthead, edge]) {
       node.addEventListener("pointerenter", enter); node.addEventListener("pointerleave", leave);
@@ -204,9 +233,11 @@ export class PlannerIntroduction {
     edge.addEventListener("click", click); doc.addEventListener("keydown", key); doc.addEventListener("click", outsideClick);
     doc.addEventListener("pointerdown", pointerDown, true); doc.addEventListener("pointerup", pointerEnd, true); doc.addEventListener("pointercancel", pointerEnd, true);
     doc.addEventListener("pointermove", pointerMove, true);
+    const wheel = () => { this.stopHeaderMotion(); };
+    view.addEventListener("wheel", wheel, {passive:true});
     view.addEventListener("scrollend", scrollEnd); view.addEventListener("blur", blur);
     return () => {
-      cancelLeave(); observer.disconnect(); this.stopHeaderMotion();
+      cancelLeave(); observer.disconnect();resizeObserver?.disconnect(); this.stopHeaderMotion();
       for (const node of [masthead, edge]) {
         node.removeEventListener("pointerenter", enter); node.removeEventListener("pointerleave", leave);
         node.removeEventListener("focusout", focusOut);
@@ -214,6 +245,7 @@ export class PlannerIntroduction {
       edge.removeEventListener("click", click); doc.removeEventListener("keydown", key); doc.removeEventListener("click", outsideClick);
       doc.removeEventListener("pointerdown", pointerDown, true); doc.removeEventListener("pointerup", pointerEnd, true); doc.removeEventListener("pointercancel", pointerEnd, true);
       doc.removeEventListener("pointermove", pointerMove, true);
+      view.removeEventListener("wheel", wheel);
       view.removeEventListener("scrollend", scrollEnd); view.removeEventListener("blur", blur);
     };
   }
@@ -312,7 +344,7 @@ export class PlannerIntroduction {
       // Scroll the original banner away; never hide, move or restyle its menu.
       // Stop at the title so the term selector and notices remain accessible.
       const compact = !this.isHeaderAtCompactPosition();
-      this.compactHeader = compact; this.headerRevealed = false;
+      this.compactHeader = compact; this.headerRevealed = false;this.headerLatched=false;
       this.moveHeader(compact ? this.compactTop() : 0);
       this.saveChoice(compact);
       header.focus({preventScroll: true});
@@ -330,11 +362,20 @@ export class PlannerIntroduction {
 
   positionHeader(): void {
     const s = this.state, view = s?.doc.defaultView;
-    if (!s || !view || !this.compactHeader || this.headerRevealed || this.headerMotion || s.doc.visibilityState === 'hidden') return;
+    if (!s || !view || this.headerMotion || s.doc.visibilityState === 'hidden') return;
+    if (this.headerRevealed||!this.compactHeader) {
+      if (this.headerLatched||!this.compactHeader) {
+        // Keep a fully fitting header visible. Oversized native menus retain
+        // only the root travel needed to reach their bottom and close control.
+        const maxScroll = Math.max(0, view.scrollY + this.headerClearance() - view.innerHeight);
+        if (view.scrollY > maxScroll + 1) view.scrollTo({top: maxScroll, behavior: 'instant'});
+      }
+      return;
+    }
     const top = s.title.getBoundingClientRect().top;
     // Keep the saved compact view when native navigation resets root scrolling.
-    // Scrolling deeper stays free; Show header releases this minimum position.
-    if (top > 13) view.scrollTo({top: Math.max(0, view.scrollY + top - 12), behavior: 'instant'});
+    // Keep compact root alignment; panels retain their independent scrolling.
+    if (Math.abs(top-12)>1) view.scrollTo({top: this.compactTop(), behavior: 'instant'});
   }
 
   positionInfo(): void {
@@ -342,7 +383,11 @@ export class PlannerIntroduction {
     const compact = this.isHeaderAtCompactPosition();
     s.doc.documentElement.classList.toggle("pl-header-compact", compact);
     s.doc.documentElement.classList.toggle("pl-header-revealed", this.headerRevealed);
-    if (s.edge) { s.edge.hidden = !compact; s.edge.setAttribute("aria-expanded", String(this.headerRevealed)); }
+    const open=!this.compactHeader||this.headerRevealed;
+    s.doc.documentElement.classList.toggle("pl-header-latched",!this.compactHeader||this.headerLatched&&this.headerRevealed);
+    if(open)s.edge?.style.setProperty('--pl-header-edge-top',`${Math.max(0,Math.min(s.doc.defaultView!.innerHeight-32,this.headerClearance()-32))}px`);
+    else s.edge?.style.removeProperty('--pl-header-edge-top');
+    if (s.edge) { s.edge.hidden = false;s.edge.textContent=open?"Hide UCLA menu":"UCLA menu";s.edge.title=open?"Click to hide UCLA's menu, or press Escape.":"Click to show UCLA's menu.";s.edge.setAttribute("aria-label",open?"Hide UCLA header":"Show UCLA header temporarily"); s.edge.setAttribute("aria-expanded", String(open)); }
     s.header.textContent = compact ? "Show header" : "Compact header";
     s.header.setAttribute("aria-pressed", String(compact));
     s.header.title = this.saveFailed ? "Could not save the header preference. Try again." : compact ? "Show UCLA's menu and stop keeping the header compact" : "Keep UCLA's banner out of view across terms and reloads";
@@ -370,7 +415,7 @@ export class PlannerIntroduction {
   restore(): void {
     const s = this.state; if (!s) return;
     s.cleanupReveal(); this.headerRevealed = false; this.state = null;
-    s.doc.documentElement.classList.remove("pl-header-compact", "pl-header-revealed"); s.edge?.remove();
+    s.doc.documentElement.classList.remove("pl-header-compact", "pl-header-revealed","pl-header-latched");this.headerLatched=false; s.edge?.remove();
     s.doc.removeEventListener('focusin', s.focus);
     s.doc.defaultView?.removeEventListener('beforeprint',s.beforePrint);s.doc.defaultView?.removeEventListener('afterprint',s.afterPrint);s.afterPrint();
     s.layout.classList.remove("pl-planner-introduction"); s.term.classList.remove("pl-intro-term");

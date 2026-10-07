@@ -1,5 +1,21 @@
 # 本地开发更新日志
 
+## 23 — 提示重叠、课程箭头与明确备注保存
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：修复截图中的不同颜色提示文字重叠、课程向下箭头被遮盖，并完成第 17 条暂缓的备注 UX。用户本轮明确选择“编辑 → 保存 / 取消”。
+
+修改：为每个直接位于工作区下的原生提示分配独立自动网格行，允许换行和自然高度；已有 childList 观察器同步提示数量，工作区占最后的弹性行，Original layout 清理布局变量。关闭 Course tools 时隐藏颜色包装内部的原生排序按钮，打开时保留原节点并完整显示；颜色输入仍投影到标题。备注新增 Save note / Cancel，Enter 保存、Escape 取消并返回编辑入口；失焦不再保存，空备注保存用于清除，保留原有 24 字、本地存储及上下文边界。
+
+文件：public/injected.css、src/content/planner-workspace.ts、src/content/myucla-controller.ts、tests/content/myucla-controller.test.ts、harness/verify-course-title-tools.mjs、harness/verify-course-controls.mjs，以及本日志和 HANDOFF.md。
+
+验证：npm run typecheck、npm test -- --run（39 文件、566 项）、npm run build、git diff --check 均通过。新增虚构浏览器回归在 light/dark 各 1440/960/390px 验证提示不重叠、嵌套箭头关闭隐藏/打开完整落在卡片内、备注保存/取消、提示动态增删、10 次本地拖拽、原生节点/form 身份与 Original 恢复。已查看虚构截图。既有 course-controls 在 2048/1440/1280/390×900 和 1440×650 全部通过，含备注长度与持久化及原生操作的虚构模拟。
+
+实际遇到的问题：首次沙箱测试因临时文件 rename EPERM 未运行任何测试；获准在沙箱外运行后发现 5 项原页面精确恢复失败，原因是添加变量后才记录原 style 存在状态，修复后完整通过。首次浏览器调用找不到沙箱内 Playwright 浏览器，改用已安装 Chrome 验证拦截网络的虚构页。旧 course-controls 分别因已移除的二级菜单和未展开 Layout settings 超时，更新测试入口后通过；这些失败不属于真实账户验证。
+
+限制与交付：截图对应真实 DOM 未直接检查，修复针对代码中可复现的网格重叠和嵌套箭头泄漏；真实页面仍待用户重载扩展、刷新后确认。无真实账户操作、无新增请求/轮询/权限，无实际原生排序或注册动作。当前分支 derrick-improvements；代码未提交、未推送；dist 已重建但不提交。
+
 建立日期：2026-10-05（America/Los_Angeles）。
 
 这份文件记录 Derek 在首次 PR 之后提出的开发任务及完成情况，供后续开发接续使用。
@@ -359,3 +375,115 @@ Finding: GitHub Release run 37400515326 failed at npm ci under Node 22.23.3/npm 
 Changes: regenerated package-lock.json with npm 10, adding the missing esbuild peer and platform entries. Added a release-checklist requirement for a clean install with the release runner's npm version before tagging. No production source or version change.
 
 Verification: npm 10.9.9 clean-install dry run and full npm ci pass locally on Windows; typecheck, all 565 tests in 39 files and production build pass after that clean install. npm audit reports zero vulnerabilities. These local checks used Node 24.19.0, not a Linux runner; GitHub verification of the corrected commit is still pending. No commit, push, tag modification, release publication, installed-extension overwrite or authenticated-page interaction was performed. The user will commit and push the repair and update the unpublished failed tag.
+
+## 24 — 顶部中间下拉提示与点击展开
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：全宽顶部悬停触发过于灵敏，移动到浏览器标签页时误展开 UCLA 顶栏；改为顶部中间小感应条，悬停显示下箭头，点击才展开。
+
+修改：感应范围从全宽缩到居中 80px、高 10px 的提示条；悬停仅将自有提示按钮下拉到 32px 并显示下箭头，不滚动或展开原生顶栏。点击临时展开原生顶栏；鼠标激活后释放隐藏按钮焦点，避免离开后无法收起。保留原生键盘访问、菜单/焦点保持、Escape、外部点击和离开收起、显式 Show header 偏好、打印和 reduced motion。浅色/深色提示均适配。未增加网络请求、轮询、存储或权限。
+
+文件：src/content/planner-introduction.ts、public/injected.css、public/dark.css、tests/content/planner-introduction-header.test.ts、harness/verify-header-reveal.mjs、docs/MYUCLA_CONTRACT.md、PRIVACY.md、HANDOFF.md、DEVELOPMENT_LOG.md。保留前一任务的未提交改动。
+
+验证：npm run typecheck、npm test -- --run（39 文件、563 项）、npm run build、git diff --check 通过。旧自动展开测试改为点击展开；原悬停抑制的四个用例合并为一个不因悬停展开、Escape 后仍不误触的用例，因此总数由 566 变为 563。虚构 production header matrix 全部 10 组通过：2048/1440/1280/390px 的 light/dark，以及 2048/390px dark nested-shadow；验证仅居中小范围、边缘经过/中间悬停不展开、提示下拉尺寸、点击/触摸/键盘打开、原生菜单/焦点保持、Escape、离开、偏好隔离、原生身份、通知、滚动、打印与 Original 恢复。已查看虚构深色收起截图。浏览器报告和截图改存项目忽略的 harness/shots/header-reveal。
+
+失败与修正：首轮真实浏览器事件回归发现鼠标点击使焦点留在已隐藏感应条、阻止离开收起，修正为只在鼠标点击时 blur；第二轮键盘尺寸测量未等待新高度动画完成而失败，测试增加 180ms 动画等待后完整通过。未把上述虚构测试视为真实账户验证。
+
+交付限制：dist 已重建；真实页面等待用户重新加载扩展并刷新确认。当前 derrick-improvements 分支，未提交、未推送、未改已安装扩展目录；无真实账户页面或注册/排序操作。
+
+## 25 — 课程卡片切换详情与顶栏菜单避让
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：移除每门课独立 Details 按钮，点击课程内容切换右侧详情；修复上方不同原生菜单展开后遮挡。另要求先分析主动点击收起顶栏的交互方案，用户看过后再改。
+
+修改：记录的首个课程标题 p 改为可聚焦的 role=button 入口，Enter/Space 可切换；首行非控件内容（标题、摘要等）点击复用原详情逻辑，再点关闭。排除原生按钮/链接/字段、Course tools、备注编辑、拖拽和文本选取，保留多课程详情与焦点返回。原生标题节点及内容不替换，恢复时精确还原属性和监听器；课程/标题重绘清理旧监听器。删除独立扩展 Details 按钮。
+
+顶栏适配：工作区位置同时避让原生顶栏、可见子表面及菜单的真实下边界、季度选择器与页面标题。限定遍历最多 2048 个元素、32 个 open shadow roots，包含原生 header host 本身的 shadowRoot；只测量渲染几何，不读取账户或菜单文本/值。已有 mutation 生命周期与 ResizeObserver 同步菜单变化；窗口空间不足时通过有间距的流布局保留原生滚动与完整菜单。无轮询、请求或权限新增。
+
+交互建议（仅提案）：保持点击展开，展开后提供可见向上箭头，再点击或 Escape 收起；鼠标离开不关闭，避免显式展开后意外收起和布局跳动。本轮未修改收起规则，等待用户确认。
+
+文件：src/content/planner-workspace.ts、src/content/planner-introduction.ts、public/injected.css、tests/content/planner-workspace.test.ts、harness/verify-course-title-tools.mjs、harness/verify-header-reveal.mjs、docs/MYUCLA_CONTRACT.md、HANDOFF.md 和本日志。
+
+验证：typecheck、完整 564 项测试（39 文件）、build、git diff --check 通过。课程虚构浏览器 light/dark 各 1440/960/390px 验证独立按钮消失、摘要点击展开/标题再点关闭、工具与备注、原生身份、拖拽和恢复；新增单元用例覆盖键盘与工具不触发详情。Header production 虚构矩阵 10/10 通过，包含 2048/1440/1280/390px light/dark 及 2048/390px dark nested-shadow；每组菜单高度 104/214/382/560px 检查菜单、季度选择器与工作区不重叠，含短窗口流布局。已查看虚构课程截图，未保存用户真实截图或账户内容到项目。
+
+失败与修正：首次标题入口依赖 controller 才生成的 class，使直接 workspace fixture 的 49 项测试失败，改为记录的原生 td > p 结构；一个旧测试断言 Details 与工具并排，按新交互更新。菜单回归首次因测试自身留下空 style 属性使 native identity 失败，修正为精确恢复原 style；Shadow DOM 测试取元素使用 document.getElementById 得到 null，改用穿透 shadow 的 locator。560px 菜单暴露短窗口 4px 重叠，补足流布局间距；随后 shadow case 暴露未进入最外层 shadowRoot，补齐遍历后完整通过。以上均为虚构页面证据，不视为真实账户验证。
+
+交付：本地 derrick-improvements，dist 已重建，日志和交接同步；未提交、未推送。真实页面效果需用户重新加载扩展、刷新后确认。未更改第 2 项自动收起行为，未执行真实原生排序或注册相关动作。
+
+## 26 — 主动点击收起顶栏与删除重复选中线
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：用户批准第 25 条的主动收起建议；修正课程详情选中后的额外竖线。
+
+修改：点击中间下箭头后，顶栏以仅内存的明确打开状态保持；鼠标离开、焦点变化、浏览器 blur 或页面其他位置点击均不自动收起。顶栏下沿中间显示向上箭头，点击或 Escape 关闭并返回原 Show header 入口焦点。给自有关闭控件预留 32px 空间，继续依据原生菜单真实边界避让；浅色/深色、键盘 Enter、触摸和 reduced motion 保留。显式保存的 Show header / Compact header 与偏好读取会清除内存打开状态。原生键盘导航所需的临时可见行为仍保留，未保存新偏好。删除第 25 条新增的首行 inset 竖线，保留既有整卡背景与选中样式，避免两根不齐的线。
+
+文件：src/content/planner-introduction.ts、public/injected.css、public/dark.css、tests/content/planner-introduction-header.test.ts、harness/verify-header-reveal.mjs、harness/verify-course-title-tools.mjs、PRIVACY.md、docs/MYUCLA_CONTRACT.md、HANDOFF.md 和本日志。
+
+验证：npm run typecheck、npm test -- --run（39 文件、565 项）、npm run build、git diff --check 通过。新增明确打开测试覆盖离开、外部点击、blur、点击关闭、Escape 及偏好隔离；旧自动收起测试保留为原生键盘临时访问路径。完整虚构 header matrix 10/10 通过，覆盖 2048/1440/1280/390px light/dark 和 2048/390px dark nested-shadow；验证真实鼠标点击向上箭头、离开仍打开、键盘、触摸、原生控件单次事件、菜单不同高度避让、打印和 Original 恢复。课程虚构回归 light/dark 各 1440/960/390px 通过，断言选中首行 box-shadow=none、详情切换、工具/备注与拖拽正常。已查看虚构展开深色顶栏截图。
+
+失败与修正：首轮浏览器真实鼠标点击无法命中向上箭头；先补充控件层级后仍失败，最终确认旧 pl-header-revealed:not(:focus-visible) 的更高优先级隐藏/禁用 pointer-events 规则仍生效。明确打开状态专门覆盖 opacity/pointer-events 后点击通过，未使用强制点击绕过问题。更新 tooltip，避免仍提示“移开鼠标收起”。
+
+交付限制：当前 derrick-improvements，保留前几轮未提交改动；dist 已重建，未提交、未推送或覆盖其他安装目录。用户需重新加载扩展并刷新确认真实效果。没有读取/存储真实课程或账户内容，无请求/轮询/权限新增，无实际注册或排序动作。
+
+## 27 — 展开顶栏滚动完整性与深色语义颜色
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：顶栏明确展开后向下滚动会留下部分缺失的顶部；提示颜色不适合 dark mode，要求检查截图以外的颜色适配。
+
+修改：在已有滚动生命周期内，明确展开时依据渲染边界限制外层文档滚动；能完整容纳的顶部保持原位，超高原生表面保留到达底部和关闭控件的必要滚动范围。内部课程列表等独立滚动不受限制，不拦截滚轮、不修改原生导航结构，点击关闭/Escape 与恢复原布局继续释放限制。深色原生通知错误/活动提示使用柔和珊瑚红，季度提醒使用琥珀色，链接保持浅蓝；介绍区及工作区的 warning/info/success/error/danger 标签与徽章补齐暗背景和对应语义文字。既有课程状态、冲突、备注、按钮、输入框、帮助和设置颜色通过整体回归检查；课程标识和日历事件原色保留。没有新请求、轮询、权限或存储。
+
+文件：src/content/planner-introduction.ts、public/dark.css、harness/verify-header-reveal.mjs、HANDOFF.md、docs/MYUCLA_CONTRACT.md、PRIVACY.md 和本日志。
+
+验证：npm run typecheck、npm test -- --run（39 文件、565 项）、npm run build 和 git diff --check 通过。虚构深色回归在 2048/1440/1280/390px 全部通过，包含 light/system 切换、详情、原生身份、日历、打印、恢复、控件对比度及 popup。顶栏完整 10 组与新增语义颜色 6 组浏览器验证覆盖真实 wheel 事件、明确打开状态、内部滚动保留、菜单避让、窄屏、Shadow DOM、关闭、原布局恢复；新增文本/徽章颜色检查要求对比度至少 4.5:1。已查看虚构深色展开截图，没有使用真实账户页面或把用户截图保存进项目。
+
+限制：真实页面仍需用户重新加载扩展并刷新后确认；超高菜单允许必要滚动，其顶部可能自然离开视口以访问底部。当前 derrick-improvements，dist 已重建；保留既有未提交改动，未提交、推送或覆盖其他安装目录，无真实注册/排序操作。
+
+## 28 — 默认展开的收起入口、侧栏滚动与底部覆盖修正
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求与用户验证：用户真实页面反馈第 27 条仍有问题：保存为显示顶栏时缺少向上箭头；左侧滚轮带动顶栏，提示消失；持续向下滚会露出底部原生页脚。之前虚构检查未覆盖保存展开状态和底部操作栏预留背景，不能视为真实页面已修复。
+
+修改：默认/保存展开时也显示可点击的向上箭头，点击调用既有 Compact header 偏好入口；临时展开仍使用内存状态关闭。默认展开同样限制外层滚动到超高表面必要范围；紧凑状态固定公共标题偏移，防止侧栏滚轮向下漂移。超高菜单的关闭箭头限制在视口内。默认展开 Escape 仅在顶栏/箭头自身处理，避免抢走其他工作区的关闭与焦点。工作区背景高度延伸到视口底部，操作栏预留改为内部 padding，因此原生页脚不会从预留缝隙露出；内容保留避让空间。保留原生节点、控件、内部滚动和 Original/print 恢复，没有增加数据、请求、轮询、权限或存储字段。
+
+文件：src/content/planner-introduction.ts、public/injected.css、tests/content/planner-introduction-header.test.ts、harness/verify-header-reveal.mjs、HANDOFF.md、PRIVACY.md、docs/MYUCLA_CONTRACT.md 和本日志。
+
+验证：typecheck、完整 565 项测试（39 文件）、build 和 git diff --check 通过。虚构 viewport-fill 六种尺寸通过（2048x1000、1440x900、960x650、390x600、900x350、1920x1080），含顶栏访问和恢复。新增顶栏浏览器检查覆盖保存展开的可见箭头、左侧 wheel 1200px、箭头关闭保存原布尔值、紧凑状态 wheel 2400px 不漂移、操作栏背景底部等于视口；1440/390px 的 light/dark 与 dark Shadow DOM 六组通过。所有浏览器内容为虚构，未读取或保存用户真实截图内容。
+
+失败记录：首轮完整测试有两项失败：旧测试仍要求保存展开时隐藏箭头；新增默认展开 Escape 抢走信息区关闭焦点。更新符合新需求的箭头断言，并将默认展开 Escape 限定顶栏/箭头焦点后，重新完整测试通过。没有删除失败历史或把虚构测试描述为真实页面验证。
+
+交付限制：当前 derrick-improvements，保留已有未提交修改；dist 已重建，未提交、推送或覆盖安装目录。真实页面需重新加载扩展并刷新确认，尤其是超高菜单及底部已有操作栏的情况。
+
+第 28 条追加失败与修正：六组浏览器首轮有一组（宽屏 dark Shadow DOM）在保存展开后立即滚轮仍漂移。原因是滚动动画的有限回退计时尚未清除，positionHeader 暂停限制；增加可清理的 passive wheel 监听，仅结束动画等待状态，不取消滚轮默认事件，再由既有 scroll 生命周期对齐。之后重跑完整单元与六组浏览器回归。此监听不新增轮询、请求或数据读取。
+
+第 28 条最终复验：滚轮动画修正后，typecheck、build、完整 565 项测试和六组 header 浏览器回归全部通过；此前失败的宽屏 dark Shadow DOM 也通过。已检查虚构展开截图。新增检查仅证明所用虚构结构，真实页面仍待用户重新加载确认。
+
+## 29 — 宽工作区详情内容对齐
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：用户反馈 Settings 的工作区布局下，右侧 Details 内容与面板宽度不齐。
+
+修改：取消详情原生内容 td 独立的 1040px max-width；保留面板统一 20px 内边距，使标题、课程关闭按钮、栏目标题和各节表格使用同一可用宽度。继续根据实际详情容器宽度采用既有响应式字段网格；没有修改布局偏好、原生节点、表格内容、控制处理程序或权限。
+
+文件：public/injected.css、harness/verify-course-title-tools.mjs、HANDOFF.md 和本日志。
+
+验证：npm run typecheck、npm test -- --run（39 文件、565 项）、npm run build 和 git diff --check 通过。虚构课程浏览器回归覆盖 light/dark 各 2048/1440/960/390px 共八组，新增断言详情内容宽度等于面板扣除内边距后的宽度；课程详情切换、备注与工具、重复拖拽、原生身份和恢复均通过。未逐个点击所有 Settings 预设；通用详情样式适用于这些预设，真实页面仍需用户确认。
+
+交付：dist 已重建，当前 derrick-improvements，开发日志与交接已同步；保留先前未提交工作，未提交、推送或覆盖其他安装目录。未保存用户真实截图或课程内容到项目。
+
+## 30 — 整理当日改动并提出 PR
+
+日期：2026-10-05（America/Los_Angeles）。
+
+需求：今天停止开发，将本轮改动整理为 PR。
+
+准备：读取贡献流程，拉取 origin 与 upstream；derrick-improvements 与 upstream/main 基线一致，没有上游独有提交，也未发现此分支已有打开的 PR。整理第 23—29 条的备注保存/取消、提示和箭头、顶栏交互与避让/滚动、深色语义颜色和详情宽度修复。沿用本轮已完成的 typecheck、565 项测试、build 及各虚构浏览器回归；最终 diff 检查无空白错误。PR 将说明真实页面需用户确认，不上传真实截图、课程内容或 dist，不修改版本，不执行合并。
+
+交付操作：授权范围内提交并推送至 Derrick2007 fork 的 derrick-improvements，目标为 comet-ctrl/myucla-workspace 的 main。创建结果将在本会话回报；只有维护者决定合并。
+
+第 30 条交付结果（2026-10-06，America/Los_Angeles，跨午夜）：代码提交 625c787 已推送至 origin/derrick-improvements。GitHub 连接器创建 PR 返回 403 Resource not accessible by integration；转用用户已登录的浏览器创建成功：https://github.com/comet-ctrl/myucla-workspace/pull/1 。目标 comet-ctrl:main，来源 Derrick2007:derrick-improvements，状态 Open，未合并。PR 描述包含实际测试、虚构与真实页面证据边界和剩余限制；未上传真实截图。此追加仅更新交接记录。

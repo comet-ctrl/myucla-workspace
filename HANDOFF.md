@@ -2,7 +2,66 @@
 
 Last updated: 2026-10-05
 
-Current development version: `0.19.5`, branch `main`.
+PR handoff completed 2026-10-06 (local midnight):
+https://github.com/comet-ctrl/myucla-workspace/pull/1 is open against main from
+Derrick2007:derrick-improvements. Code commit: 625c787. No merge performed.
+
+Current development version: `0.19.5`, active local branch `derrick-improvements`.
+The permanent upstream default remains `main`.
+
+## Current local follow-up (2026-10-05)
+
+End-of-day handoff: entries 23–29 are being submitted from the contributor's
+derrick-improvements branch to upstream main (entry 30). Fetched upstream is
+the same baseline commit. Current source passes typecheck, 565 tests and build;
+fictional regression evidence is recorded per entry. Authenticated-page
+confirmation remains pending. No version bump, release or merge is requested.
+
+Entry 29 removes the independent 1040px native details-content cap so the
+heading, close control and section table fill the same padded pane width in
+wide workspace layouts. Responsive field grids and native ancestry stay intact.
+
+Entry 28 corrects entry 27's missed saved-expanded path: the upward arrow
+also exists when Compact header is off, and sidebar wheel cannot drift either
+saved-expanded or compact root alignment. Default-open arrow closure saves
+the existing compact preference; temporary-open closure remains ephemeral.
+The workspace background now fills the actionbar reserve down to the viewport
+bottom, with internal padding protecting content. Real-page reload is pending.
+
+Entry 27 bounds document scrolling while the compact header is explicitly
+opened, preventing a fitting header from becoming partially hidden. Oversized
+native surfaces retain sufficient root travel; local pane scrolling stays free.
+Dark native notice text and introduction status badges now share readable
+semantic colors. See the development log for fictional checks and live limits.
+
+Latest correction implements the approved click-to-close header proposal:
+explicit opening persists through pointer departure/outside clicks/blur, with
+a visible upward close arrow in a reserved gap below the native header surfaces.
+Escape closes it; no new saved preference. Removed the duplicate selected-course
+first-row inset line while retaining the existing card selection styling.
+See DEVELOPMENT_LOG.md entry 26 for verification.
+
+Latest local changes replace the separate Details button with course-heading
+and first-row noninteractive click toggles (Enter/Space supported). Native
+controls remain isolated. Header clearance now measures native menu overflow
+through bounded open shadow roots and reserves term/title space; short windows
+use an additional flow gap. The proposal from entry 25 is now implemented
+as recorded in entry 26.
+
+The header affordance now senses only an 80px centered tab. Hover drops down
+an arrow without opening UCLA navigation; click opens the temporary header.
+Native keyboard navigation, menu/focus hold and dismissal remain available.
+See DEVELOPMENT_LOG.md entry 24 for verification and failed attempts.
+
+Uncommitted fixes separate native notice rows, hide nested native ordering
+arrows while Course tools is closed, and add explicit Save note / Cancel
+(Enter / Escape). Notes no longer save on blur; the existing 24-character
+local storage boundary remains. See DEVELOPMENT_LOG.md entry 23 for files,
+failed attempts and verification. Typecheck, 566 unit tests and build pass;
+fictional light/dark three-width title-tools and five-size course-controls
+regressions pass. Real-page confirmation after extension reload is pending.
+Origin is Derrick2007's fork; upstream is comet-ctrl's repository. No commit,
+push, installed-extension overwrite or authenticated-page action this turn.
 Installed files: `0.19.4` (Chrome reload requested). Published: `v0.19.1` prerelease.
 
 ## Permanent main workflow

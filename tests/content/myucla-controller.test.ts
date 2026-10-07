@@ -498,6 +498,28 @@ describe("MyUclaPlannerController UI", () => {
     expect(nativeClicks).not.toHaveBeenCalled();
   });
 
+  it("saves notes explicitly and cancels drafts without saving on blur", async () => {
+    controller = new MyUclaPlannerController(new MyUclaPlannerAdapter());
+    await controller.start();
+    const tools = document.querySelector<HTMLElement>("[data-pl-real-tools]")!;
+    const open = tools.querySelector<HTMLButtonElement>('[data-pl-action="tag"]')!;
+    const input = tools.querySelector<HTMLInputElement>("[data-pl-tag]")!;
+    open.click(); input.value = "Fictional note";
+    input.dispatchEvent(new Event("change", {bubbles:true}));
+    expect(document.querySelector("[data-pl-tag-badge]")?.textContent).toBe("");
+    tools.querySelector<HTMLButtonElement>('[data-pl-action="save-tag"]')!.click();
+    await settle();
+    expect(document.querySelector("[data-pl-tag-badge]")?.textContent).toBe("Fictional note");
+    open.click(); input.value = "Discard this";
+    input.dispatchEvent(new KeyboardEvent("keydown", {key:"Escape",bubbles:true,cancelable:true}));
+    expect(input.value).toBe("Fictional note");
+    expect(document.activeElement).toBe(open);
+    open.click(); input.value = "";
+    input.dispatchEvent(new KeyboardEvent("keydown", {key:"Enter",bubbles:true,cancelable:true}));
+    await settle();
+    expect(document.querySelector("[data-pl-tag-badge]")?.textContent).toBe("");
+  });
+
   it("restores an unsaved arrangement when a postback did not change the order", async () => {
     controller = new MyUclaPlannerController(new MyUclaPlannerAdapter());
     await controller.start();

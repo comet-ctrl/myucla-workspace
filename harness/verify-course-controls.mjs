@@ -55,7 +55,7 @@ try {
   const order=()=>page.locator('#panelPlan #div_landing > table > tbody.courseItem').evaluateAll(rows=>rows.map(node=>[...node.classList].find(value=>/^Class\d+$/.test(value)).slice(5)));
   const course=id=>page.locator('#panelPlan tbody.Class'+id);
   const actions=async id=>{const button=course(id).locator('[data-pl-workspace-actions]');await button.scrollIntoViewIfNeeded();if(await button.getAttribute('aria-expanded')!=='true')await button.click();};
-  const more=async id=>{await actions(id);const summary=course(id).locator('.pl-course-more');if(!await summary.evaluate(node=>node.parentElement.open))await summary.click();};
+  const more=async id=>{await actions(id);};
   const undo=async()=>{await page.locator('[data-pl-action="discard"]').click();assert.deepEqual(await order(),serverOrder);};
   await page.goto(url);await ready();
   assert.deepEqual(await order(),initialOrder);
@@ -96,7 +96,7 @@ try {
 
   // Notes are local, capped and restored by the actual storage path.
   await more(initialOrder[0]);await course(initialOrder[0]).locator('[data-pl-action="tag"]').click();
-  let note=course(initialOrder[0]).locator('[data-pl-tag]');await note.pressSequentially('ABCDEFGHIJKLMNOPQRSTUVWXYZ');assert.equal((await note.inputValue()).length,24,'typing honors the native note length limit');await note.fill('Fictional reminder');await note.press('Tab');
+  let note=course(initialOrder[0]).locator('[data-pl-tag]');await note.pressSequentially('ABCDEFGHIJKLMNOPQRSTUVWXYZ');assert.equal((await note.inputValue()).length,24,'typing honors the native note length limit');await note.fill('Fictional reminder');await course(initialOrder[0]).getByRole('button',{name:'Save note',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-pl-tag]').value==='Fictional reminder');
   await page.reload();await ready();await more(initialOrder[0]);await course(initialOrder[0]).locator('[data-pl-action="tag"]').click();
   note=course(initialOrder[0]).locator('[data-pl-tag]');assert.equal(await note.inputValue(),'Fictional reminder');
@@ -138,6 +138,7 @@ try {
   foreignFrame=false;const failedLoads=mainLoads;await Promise.all([page.waitForEvent('load'),reload.click()]);await ready();
   assert.ok(mainLoads>failedLoads,'Reload page invokes a real fictional main navigation');assert.deepEqual(await order(),serverOrder);
   await page.locator('[data-pl-action="drop-draft"]').click();assert.equal(await page.locator('[data-pl-draft]').isVisible(),false);
+  await page.locator('.pl-workspace-layout-settings > summary').click();
   await page.locator('.pl-workspace-original').click();
   for(let index=0;index<2;index++){
    const toggle=page.locator('[data-pl-action="toggle-all"]'),willExpand=await toggle.innerText()==='Expand all';await toggle.click();

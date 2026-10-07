@@ -109,7 +109,12 @@
   /* UCLA presents these notices as inline text and links. Button fills create
      disconnected dark rectangles here; keep the same native presentation. */
   html[data-pl-appearance="dark"] .pl-workspace-host > .classPlanner_Messages { background: transparent; color: var(--pl-dark-muted); }
-  html[data-pl-appearance="dark"] .pl-workspace-host .classPlanner_Messages .errorText:not(button) { color: #f3c979; }
+  html[data-pl-appearance="dark"] .pl-workspace-host .classPlanner_Messages :is(.classPlanner_Labels,.errorText):not(button) { color: #ff9ba6 !important; }
+  html[data-pl-appearance="dark"] .pl-workspace-host .classPlanner_Messages .classPlanner_TermReq { color: #f3c979 !important; }
+  html[data-pl-appearance="dark"] :is(.pl-workspace-host,.pl-planner-introduction) :is(.label.warning,.badge.warning) { background: #3d321f !important; color: #f3c979 !important; }
+  html[data-pl-appearance="dark"] :is(.pl-workspace-host,.pl-planner-introduction) :is(.label.info,.badge.info) { background: #263e57 !important; color: #b8dcff !important; }
+  html[data-pl-appearance="dark"] :is(.pl-workspace-host,.pl-planner-introduction) :is(.label.success,.badge.success) { background: #1d3b30 !important; color: #8be0ae !important; }
+  html[data-pl-appearance="dark"] :is(.pl-workspace-host,.pl-planner-introduction) :is(.label.danger,.badge.danger,.label.error,.badge.error) { background: #442b35 !important; color: #ff9ba6 !important; }
   html[data-pl-appearance="dark"] .pl-workspace-host :is(.classPlanner_Messages,.plannerTopMenuLinks,.plannerMenuLinks) button.link,
   html[data-pl-appearance="dark"] .pl-workspace-host :is(.classPlanner_Messages,.plannerTopMenuLinks,.plannerMenuLinks) button.link:hover:not(:disabled) {
     background: transparent !important; color: var(--pl-dark-link) !important; box-shadow: none;
@@ -118,7 +123,10 @@
   html[data-pl-appearance="dark"] .pl-workspace-host :is(.classPlanner_Messages,.plannerTopMenuLinks,.plannerMenuLinks) button.link:disabled { color: var(--pl-dark-muted) !important; cursor: default; }
   html[data-pl-appearance="dark"] .pl-workspace-host button.link.text-default > :is(i,span) { color: inherit !important; }
   html[data-pl-appearance="dark"] button.pl-intro-header-edge::after { background: #7898b9; }
-  html[data-pl-appearance="dark"] button.pl-intro-header-edge:hover::after { background: #99ccff; }
+  html[data-pl-appearance="dark"] button.pl-intro-header-edge:hover { background: var(--pl-dark-raised); border-color: #7898b9; }
+  html[data-pl-appearance="dark"].pl-header-latched button.pl-intro-header-edge { background:var(--pl-dark-raised);border-color:#7898b9; }
+  html[data-pl-appearance="dark"].pl-header-latched button.pl-intro-header-edge::after { background:transparent;border-color:#99ccff; }
+  html[data-pl-appearance="dark"] button.pl-intro-header-edge:hover::after { background: transparent; border-color: #99ccff; }
   html[data-pl-appearance="dark"] button.pl-intro-header-edge:focus-visible { color: var(--pl-dark-link); background: var(--pl-dark-raised); border-color: #7898b9; outline-color: var(--pl-dark-focus); }
   html[data-pl-appearance="dark"] .pl-workspace-shell,
   html[data-pl-appearance="dark"] .pl-workspace-nav-footer { border-color: var(--pl-dark-line); }
